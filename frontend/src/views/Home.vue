@@ -1,3 +1,26 @@
+<script setup lang="ts">
+import { computed } from 'vue'
+import { useRatesStore } from '@/stores/rates'
+import InterestRateChart from '@/components/charts/InterestRateChart.vue'
+
+const ratesStore = useRatesStore()
+
+const fetchExchangeRates = () => {
+  ratesStore.fetchLatestExchangeRates('USD')
+}
+
+const fetchInterestRates = () => {
+  ratesStore.fetchLatestInterestRates()
+}
+
+const interestChartData = computed(() => {
+  return ratesStore.interestRates.map(rate => ({
+    country: rate.country_code,
+    rate: parseFloat(String(rate.rate))
+  }))
+})
+</script>
+
 <template>
   <div class="max-w-6xl mx-auto">
     <div class="mb-8">
@@ -109,26 +132,3 @@
     </div>
   </div>
 </template>
-
-<script setup lang="ts">
-import { computed } from 'vue'
-import { useRatesStore } from '@/stores/rates'
-import InterestRateChart from '@/components/charts/InterestRateChart.vue'
-
-const ratesStore = useRatesStore()
-
-const fetchExchangeRates = () => {
-  ratesStore.fetchLatestExchangeRates('USD')
-}
-
-const fetchInterestRates = () => {
-  ratesStore.fetchLatestInterestRates()
-}
-
-const interestChartData = computed(() => {
-  return ratesStore.interestRates.map(rate => ({
-    country: rate.country_code,
-    rate: parseFloat(String(rate.rate))
-  }))
-})
-</script>

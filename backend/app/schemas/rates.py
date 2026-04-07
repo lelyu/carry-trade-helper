@@ -2,6 +2,7 @@ from pydantic import BaseModel
 from datetime import date
 from decimal import Decimal
 from typing import List
+from uuid import UUID
 
 
 class ExchangeRateBase(BaseModel):
@@ -13,7 +14,6 @@ class ExchangeRateBase(BaseModel):
 
 
 class ExchangeRateResponse(ExchangeRateBase):
-    from uuid import UUID
     id: UUID
     created_at: date
     
@@ -37,7 +37,6 @@ class InterestRateBase(BaseModel):
 
 
 class InterestRateResponse(InterestRateBase):
-    from uuid import UUID
     id: UUID
     created_at: date
     

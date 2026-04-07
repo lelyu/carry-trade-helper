@@ -1,4 +1,4 @@
-from typing import Dict
+from typing import Dict, Optional
 from deepagents import create_deep_agent
 from app.core.config import settings
 from app.services.tavily_client import internet_search
@@ -103,8 +103,22 @@ Format your responses clearly with:
 Always emphasize risk management and never provide financial advice as guaranteed outcomes."""
 
 
-carry_trade_agent = create_deep_agent(
-    model="google_genai:gemini-pro",
-    tools=[internet_search, get_exchange_rate, get_interest_rate],
-    system_prompt=carry_trade_system_prompt,
-)
+_carry_trade_agent: Optional[object] = None
+
+
+def get_carry_trade_agent():
+    """Get or create the carry trade agent (lazy initialization)"""
+    global _carry_trade_agent
+    
+    if _carry_trade_agent is None:
+        _carry_trade_agent = create_deep_agent(
+            model="google_genai:gemini-pro",
+            tools=[internet_search, get_exchange_rate, get_interest_rate],
+            system_prompt=carry_trade_system_prompt,
+        )
+    
+    return _carry_trade_agent
+
+
+# For backwards compatibility
+carry_trade_agent = property(lambda self: get_carry_trade_agent())

@@ -1,10 +1,3 @@
-<template>
-  <div class="chart-container">
-    <h3 class="text-lg font-semibold mb-4">{{ title }}</h3>
-    <div ref="chartRef" class="w-full"></div>
-  </div>
-</template>
-
 <script setup lang="ts">
 import * as d3 from 'd3'
 import { onMounted, ref, watch } from 'vue'
@@ -94,7 +87,8 @@ const drawChart = () => {
     .attr('opacity', 1)
 
   svg.selectAll('.dot')
-    .on('mouseover', function(event, d) {
+    .on('mouseover', function(_event: MouseEvent, datum: unknown) {
+      const d = datum as { date: Date; rate: number }
       d3.select(this)
         .transition()
         .duration(200)
@@ -126,6 +120,13 @@ watch(() => props.data, () => {
   drawChart()
 }, { deep: true })
 </script>
+
+<template>
+  <div class="chart-container">
+    <h3 class="text-lg font-semibold mb-4">{{ title }}</h3>
+    <div ref="chartRef" class="w-full"></div>
+  </div>
+</template>
 
 <style scoped>
 .chart-container {

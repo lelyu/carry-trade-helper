@@ -1,7 +1,7 @@
 """${message}
 
 Revision ID: ${up_revision}
-Revises: ${down_revision | comma}
+Revises: ${down_revision | comma,n}
 Create Date: ${create_date}
 
 """
@@ -9,7 +9,7 @@ from typing import Sequence, Union
 
 from alembic import op
 import sqlalchemy as sa
-${imports if imports else""}
+${imports if imports else ""}
 
 # revision identifiers, used by Alembic.
 revision: str = ${repr(up_revision)}

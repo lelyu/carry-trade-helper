@@ -8,8 +8,8 @@ resend.api_key = settings.RESEND_API_KEY
 async def send_magic_link_email(to: str, token: str):
     magic_url = f"{settings.FRONTEND_URL}/auth/verify?token={token}"
     
-    resend.Email.send({
-        "from": f"Carry Trade Helper <noreply@{settings.EMAIL_DOMAIN}>",
+    resend.Emails.send({
+        "from": f"Carry Trade Helper <onboarding@resend.dev>",
         "to": [to],
         "subject": "Sign in to Carry Trade Helper",
         "html": f"""

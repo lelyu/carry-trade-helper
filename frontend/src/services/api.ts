@@ -41,9 +41,9 @@ export const exchangeRatesApi = {
     return response.data
   },
 
-  getHistorical: async (base: string, quotes: string, from: string, to: string) => {
+  getHistorical: async (base: string, target: string, from: string, to: string) => {
     const response = await api.get('/api/exchange-rates/historical', {
-      params: { base, quotes, from_date: from, to_date: to }
+      params: { base, quotes: target, from_date: from, to_date: to }
     })
     return response.data
   },

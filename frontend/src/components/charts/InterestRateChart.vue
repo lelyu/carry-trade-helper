@@ -1,10 +1,3 @@
-<template>
-  <div class="chart-container">
-    <h3 class="text-lg font-semibold mb-4">{{ title }}</h3>
-    <div ref="chartRef" class="w-full"></div>
-  </div>
-</template>
-
 <script setup lang="ts">
 import * as d3 from 'd3'
 import { onMounted, ref, watch } from 'vue'
@@ -91,7 +84,7 @@ const drawChart = () => {
     .style('fill', '#374151')
     .text(d => `${d.rate.toFixed(2)}%`)
 
-  bars.on('mouseover', function(event, d) {
+  bars.on('mouseover', function() {
     d3.select(this)
       .transition()
       .duration(200)
@@ -113,6 +106,13 @@ watch(() => props.data, () => {
   drawChart()
 }, { deep: true })
 </script>
+
+<template>
+  <div class="chart-container">
+    <h3 class="text-lg font-semibold mb-4">{{ title }}</h3>
+    <div ref="chartRef" class="w-full"></div>
+  </div>
+</template>
 
 <style scoped>
 .chart-container {

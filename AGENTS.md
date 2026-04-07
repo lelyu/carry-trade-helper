@@ -44,11 +44,16 @@ A comprehensive platform for carry trade analysis featuring:
 
 ### Frontend (TypeScript/Vue)
 - Use `<script setup lang="ts">` syntax
+- **Component structure order**: `<script setup>` → `<template>` → `<style scoped>`
+  - Script MUST come first for better code organization and readability
+  - Template follows after script
+  - Styles (if present) come last
 - Strict TypeScript mode enabled
 - Composition API only (no Options API)
 - D3.js integration in dedicated chart components
 - Pinia for state management
 - Tailwind CSS utility-first approach
+- Always place script section first for consistency across all components
 
 ## Project Structure
 

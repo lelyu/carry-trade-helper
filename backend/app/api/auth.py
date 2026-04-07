@@ -1,10 +1,11 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 
 from app.core.database import get_db
-from app.core.security import create_magic_link_token, create_access_token, verify_token
+from app.core.security import create_magic_link_token, create_access_token, verify_token, get_current_user
+from app.core.config import settings
 from app.models.user import User
 from app.models.magic_link import MagicLink
 from app.schemas.user import MagicLinkRequest, MagicLinkVerify, TokenResponse, UserResponse
@@ -29,9 +30,12 @@ async def request_magic_link(
     
     token = create_magic_link_token(request.email)
     
+    expires_at = datetime.now(timezone.utc) + timedelta(minutes=settings.MAGIC_LINK_EXPIRE_MINUTES)
+    
     magic_link = MagicLink(
         user_id=user.id,
-        token=token
+        token=token,
+        expires_at=expires_at
     )
     db.add(magic_link)
     await db.commit()
@@ -65,7 +69,7 @@ async def verify_magic_link(
             detail="Invalid or used magic link"
         )
     
-    if datetime.utcnow() > magic_link.expires_at:
+    if datetime.now(timezone.utc) > magic_link.expires_at:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Magic link expired"
@@ -83,7 +87,7 @@ async def verify_magic_link(
         )
     
     user.is_verified = True
-    user.last_login = datetime.utcnow()
+    user.last_login = datetime.now(timezone.utc)
     magic_link.used = True
     
     await db.commit()
@@ -93,13 +97,12 @@ async def verify_magic_link(
     return TokenResponse(
         access_token=access_token,
         token_type="bearer",
-        user=UserResponse.from_orm(user)
+        user=UserResponse.model_validate(user)
     )
 
 
 @router.get("/me", response_model=UserResponse)
 async def get_current_user_info(
-    current_user: User = Depends(lambda: None)
+    current_user: User = Depends(get_current_user)
 ):
-    from app.core.security import get_current_user
-    return UserResponse.from_orm(current_user)
+    return UserResponse.model_validate(current_user)

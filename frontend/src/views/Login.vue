@@ -1,3 +1,39 @@
+<script setup lang="ts">
+import { ref, computed } from 'vue'
+import { useAuthStore } from '@/stores/auth'
+
+const authStore = useAuthStore()
+
+const email = ref('')
+const loading = ref(false)
+const message = ref('')
+const isError = ref(false)
+
+const messageClass = computed(() => ({
+  'bg-green-50 text-green-800': !isError.value,
+  'bg-red-50 text-red-800': isError.value
+}))
+
+const handleSubmit = async () => {
+  if (!email.value) return
+  
+  loading.value = true
+  message.value = ''
+  
+  const result = await authStore.login(email.value)
+  
+  loading.value = false
+  
+  if (result.success) {
+    message.value = 'Magic link sent! Check your email.'
+    isError.value = false
+  } else {
+    message.value = 'Failed to send magic link. Please try again.'
+    isError.value = true
+  }
+}
+</script>
+
 <template>
   <div class="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
     <div class="max-w-md w-full space-y-8">
@@ -44,39 +80,3 @@
     </div>
   </div>
 </template>
-
-<script setup lang="ts">
-import { ref, computed } from 'vue'
-import { useAuthStore } from '@/stores/auth'
-
-const authStore = useAuthStore()
-
-const email = ref('')
-const loading = ref(false)
-const message = ref('')
-const isError = ref(false)
-
-const messageClass = computed(() => ({
-  'bg-green-50 text-green-800': !isError.value,
-  'bg-red-50 text-red-800': isError.value
-}))
-
-const handleSubmit = async () => {
-  if (!email.value) return
-  
-  loading.value = true
-  message.value = ''
-  
-  const result = await authStore.login(email.value)
-  
-  loading.value = false
-  
-  if (result.success) {
-    message.value = 'Magic link sent! Check your email.'
-    isError.value = false
-  } else {
-    message.value = 'Failed to send magic link. Please try again.'
-    isError.value = true
-  }
-}
-</script>

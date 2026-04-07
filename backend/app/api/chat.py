@@ -8,7 +8,7 @@ from app.core.security import get_current_user
 from app.models.user import User
 from app.models.chat import ChatMessage
 from app.schemas.chat import ChatMessageCreate, ChatMessageResponse, ChatHistoryResponse
-from app.agents.carry_trade_agent import carry_trade_agent
+from app.agents.carry_trade_agent import get_carry_trade_agent
 
 router = APIRouter(prefix="/api/chat", tags=["chat"])
 
@@ -40,7 +40,8 @@ async def send_message(
         for msg in chat_history
     ]
     
-    result = carry_trade_agent.invoke({"messages": messages})
+    agent = get_carry_trade_agent()
+    result = agent.invoke({"messages": messages})
     
     assistant_content = result["messages"][-1].content
     

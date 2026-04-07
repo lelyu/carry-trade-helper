@@ -1,6 +1,6 @@
 import uuid
-from datetime import datetime, date
-from sqlalchemy import Column, String, Date, DateTime, DECIMAL, Index
+from datetime import datetime, timezone, date
+from sqlalchemy import Column, String, Date, DateTime, DECIMAL, Index, UniqueConstraint
 from sqlalchemy.dialects.postgresql import UUID
 
 from app.core.database import Base
@@ -15,12 +15,12 @@ class ExchangeRate(Base):
     rate = Column(DECIMAL(10, 6), nullable=False)
     date = Column(Date, nullable=False)
     source = Column(String(50), default="frankfurter")
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
     
     __table_args__ = (
         Index("idx_exchange_rates_date", "date"),
         Index("idx_exchange_rates_pair", "base_currency", "target_currency"),
-        {"unique_constraint": "unique_base_target_date"}
+        UniqueConstraint("base_currency", "target_currency", "date", name="unique_base_target_date"),
     )
 
 
@@ -35,7 +35,7 @@ class InterestRate(Base):
     date = Column(Date, nullable=False)
     source = Column(String(50), default="dbnomics")
     provider_code = Column(String(100), nullable=True)
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
     
     __table_args__ = (
         Index("idx_interest_rates_date", "date"),

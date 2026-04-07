@@ -16,7 +16,15 @@ export default defineConfig({
         target: 'http://localhost:8000',
         changeOrigin: true
       },
-      '/auth': {
+      '/auth/request-magic-link': {
+        target: 'http://localhost:8000',
+        changeOrigin: true
+      },
+      '/auth/verify-magic-link': {
+        target: 'http://localhost:8000',
+        changeOrigin: true
+      },
+      '/auth/me': {
         target: 'http://localhost:8000',
         changeOrigin: true
       }

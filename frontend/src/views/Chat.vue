@@ -1,3 +1,24 @@
+<script setup lang="ts">
+import { ref, computed } from 'vue'
+import { useChatStore } from '@/stores/chat'
+
+const chatStore = useChatStore()
+
+const inputMessage = ref('')
+const loading = computed(() => chatStore.loading)
+const error = computed(() => chatStore.error)
+const messages = computed(() => chatStore.messages)
+
+const sendMessage = async () => {
+  if (!inputMessage.value.trim()) return
+  
+  const message = inputMessage.value
+  inputMessage.value = ''
+  
+  await chatStore.sendMessage(message)
+}
+</script>
+
 <template>
   <div class="max-w-4xl mx-auto">
     <h1 class="text-3xl font-bold text-gray-900 mb-6">AI Trading Assistant</h1>
@@ -61,24 +82,3 @@
     </div>
   </div>
 </template>
-
-<script setup lang="ts">
-import { ref, computed } from 'vue'
-import { useChatStore } from '@/stores/chat'
-
-const chatStore = useChatStore()
-
-const inputMessage = ref('')
-const loading = computed(() => chatStore.loading)
-const error = computed(() => chatStore.error)
-const messages = computed(() => chatStore.messages)
-
-const sendMessage = async () => {
-  if (!inputMessage.value.trim()) return
-  
-  const message = inputMessage.value
-  inputMessage.value = ''
-  
-  await chatStore.sendMessage(message)
-}
-</script>
