@@ -1,0 +1,21 @@
+[tool.poetry]
+name = "carry-trade-helper"
+version = "0.1.0"
+description = "Carry trade analysis platform with AI recommendations"
+authors = ["Your Name <you@example.com>"]
+
+[tool.black]
+line-length = 100
+target-version = ['py311']
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_functions = ["test_*"]
+
+[tool.mypy]
+python_version = "3.11"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true

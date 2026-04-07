@@ -1,0 +1,10 @@
+missing-docstring-string
+missing-module-docstring
+missing-class-docstring
+missing-function-docstring
+parameter-unpacking
+unsubscriptable-object
+unimplemented-interface
+import-error
+no-name-in-modules
+no-member
