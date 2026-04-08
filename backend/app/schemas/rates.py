@@ -31,13 +31,12 @@ class InterestRateBase(BaseModel):
     rate: Decimal
     rate_type: str | None = None
     date: date
-    source: str = "dbnomics"
-    provider_code: str | None = None
+    source: str | None = "fred"
 
 
 class InterestRateResponse(InterestRateBase):
-    id: UUID
-    created_at: date
+    id: UUID | None
+    created_at: date | None
 
     class Config:
         from_attributes = True

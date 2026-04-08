@@ -6,7 +6,7 @@ from app.core.database import async_session_maker
 from app.models.rates import ExchangeRate, InterestRate
 from app.models.subscription import UserPreferences
 from app.services.frankfurter_client import frankfurter_client
-from app.services.dbnomics_client import dbnomics_client
+from app.services.fred_client import fred_client
 from app.core.config import settings
 import asyncio
 
@@ -43,7 +43,7 @@ async def _fetch_and_cache_rates():
                         )
                         db.add(rate)
 
-            interest_data = await dbnomics_client.get_interest_rates(
+            interest_data = await fred_client.get_interest_rates(
                 country_codes=[
                     "USA",
                     "EUR",
@@ -73,7 +73,6 @@ async def _fetch_and_cache_rates():
                         rate=rate_data["rate"],
                         rate_type=rate_data.get("rate_type", "policy_rate"),
                         date=date.today(),
-                        provider_code=rate_data.get("provider_code"),
                     )
                     db.add(rate)
 

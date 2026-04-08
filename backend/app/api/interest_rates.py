@@ -8,7 +8,7 @@ from app.core.security import get_current_user
 from app.models.user import User
 from app.models.rates import InterestRate
 from app.schemas.rates import InterestRateResponse, InterestRateListResponse
-from app.services.dbnomics_client import dbnomics_client
+from app.services.fred_client import fred_client
 from app.core.config import settings
 
 router = APIRouter(prefix="/api/interest-rates", tags=["interest-rates"])
@@ -18,7 +18,6 @@ router = APIRouter(prefix="/api/interest-rates", tags=["interest-rates"])
 async def get_latest_rates(
     countries: str = Query(default=None),
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user),
 ):
     countries_list = (
         countries.split(",")
@@ -37,9 +36,7 @@ async def get_latest_rates(
         rates = [InterestRateResponse.from_orm(rate) for rate in cached_rates]
         return InterestRateListResponse(rates=rates, count=len(rates))
 
-    external_data = await dbnomics_client.get_interest_rates(
-        country_codes=countries_list
-    )
+    external_data = await fred_client.get_interest_rates(country_codes=countries_list)
 
     rates = []
     for rate_data in external_data:
@@ -49,7 +46,6 @@ async def get_latest_rates(
             rate=rate_data["rate"],
             rate_type=rate_data.get("rate_type", "policy_rate"),
             date=date.today(),
-            provider_code=rate_data.get("provider_code"),
         )
         db.add(interest_rate)
         rates.append(InterestRateResponse.from_orm(interest_rate))
@@ -65,7 +61,6 @@ async def get_historical_rates(
     from_date: date = Query(...),
     to_date: date = Query(...),
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user),
 ):
     countries_list = countries.split(",")
 

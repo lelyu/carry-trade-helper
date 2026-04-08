@@ -36,7 +36,7 @@ def get_interest_rate(currency: str) -> dict:
     Returns:
         Dictionary with interest rate information
     """
-    from app.services.dbnomics_client import dbnomics_client
+    from app.services.fred_client import fred_client
     import asyncio
 
     CURRENCY_TO_COUNTRY = {
@@ -53,7 +53,7 @@ def get_interest_rate(currency: str) -> dict:
     }
 
     country = CURRENCY_TO_COUNTRY.get(currency, currency)
-    results = asyncio.run(dbnomics_client.get_interest_rates([country]))
+    results = asyncio.run(fred_client.get_interest_rates([country]))
 
     if results:
         return {

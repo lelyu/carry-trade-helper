@@ -7,6 +7,7 @@ class Settings(BaseSettings):
     RESEND_API_KEY: str
     GOOGLE_API_KEY: str
     TAVILY_API_KEY: str
+    FRED_API_KEY: str
     SECRET_KEY: str
     FRONTEND_URL: str = "http://localhost:3000"
     EMAIL_DOMAIN: str = "localhost"

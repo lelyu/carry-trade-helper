@@ -15,12 +15,16 @@ class ExchangeRate(Base):
     rate = Column(DECIMAL(10, 6), nullable=False)
     date = Column(Date, nullable=False)
     source = Column(String(50), default="frankfurter")
-    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
-    
+    created_at = Column(
+        DateTime(timezone=True), default=lambda: datetime.now(timezone.utc)
+    )
+
     __table_args__ = (
         Index("idx_exchange_rates_date", "date"),
         Index("idx_exchange_rates_pair", "base_currency", "target_currency"),
-        UniqueConstraint("base_currency", "target_currency", "date", name="unique_base_target_date"),
+        UniqueConstraint(
+            "base_currency", "target_currency", "date", name="unique_base_target_date"
+        ),
     )
 
 
@@ -33,10 +37,11 @@ class InterestRate(Base):
     rate = Column(DECIMAL(5, 2), nullable=False)
     rate_type = Column(String(50), nullable=True)
     date = Column(Date, nullable=False)
-    source = Column(String(50), default="dbnomics")
-    provider_code = Column(String(100), nullable=True)
-    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
-    
+    source = Column(String(50), default="fred")
+    created_at = Column(
+        DateTime(timezone=True), default=lambda: datetime.now(timezone.utc)
+    )
+
     __table_args__ = (
         Index("idx_interest_rates_date", "date"),
         Index("idx_interest_rates_country", "country_code"),
