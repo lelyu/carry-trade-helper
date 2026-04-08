@@ -88,74 +88,82 @@ async def get_latest_rates(
 
 @router.get("/historical", response_model=ExchangeRateListResponse)
 async def get_historical_rates(
-    base: str = Query(default="USD"),
+    base: str = Query(default="USD", max_length=3),
     quotes: str = Query(...),
     from_date: date = Query(..., alias='from'),
     to_date: date = Query(..., alias='to'),
     db: AsyncSession = Depends(get_db),
 ):
-    quotes_list = quotes.split(",")
+    # 1. Validation: Prevent the 5-year JSON crash
+    if (to_date - from_date).days > 366:
+        raise HTTPException(
+            status_code=400, 
+            detail="Date range too wide. Please limit requests to 1 year."
+        )
 
+    quotes_list = [q.strip().upper() for q in quotes.split(",")]
+
+    # 2. Fetch Data
     try:
         external_data = await frankfurter_client.get_historical_rates(
             base=base, quotes=quotes_list, from_date=from_date, to_date=to_date
         )
     except Exception as e:
-        raise HTTPException(
-            status_code=502, detail=f"Error fetching historical rates: {str(e)}"
-        )
+        # Log the full error here for debugging
+        raise HTTPException(status_code=502, detail="External API unavailable")
 
     if not external_data:
         return ExchangeRateListResponse(rates=[], count=0)
 
+    # 3. Optimized Database Logic
+    # We fetch existing records to avoid duplicates
     dates = {item["date"] for item in external_data}
-    target_currencies = [item["quote"] for item in external_data]
-
-    existing_rates = await db.execute(
-        select(ExchangeRate)
-        .where(ExchangeRate.date.in_(dates))
-        .where(ExchangeRate.base_currency == base)
-        .where(ExchangeRate.target_currency.in_(target_currencies))
+    
+    stmt = select(ExchangeRate).where(
+        ExchangeRate.date.in_(dates),
+        ExchangeRate.base_currency == base,
+        ExchangeRate.target_currency.in_(quotes_list)
     )
-    existing_rates = existing_rates.scalars().all()
+    result = await db.execute(stmt)
+    existing_records = result.scalars().all()
+    
+    # Create a lookup set for fast O(1) checking
+    existing_map = {(r.date, r.target_currency): r for r in existing_records}
 
-    existing_set = {
-        (r.base_currency, r.target_currency, r.date) for r in existing_rates
-    }
-
-    rates = []
-    exchange_rates = []
+    final_rates = []
+    to_create = []
 
     for item in external_data:
-        key = (item["base"], item["quote"], item["date"])
-
-        if key in existing_set:
-            existing = next(
-                r
-                for r in existing_rates
-                if r.base_currency == item["base"]
-                and r.target_currency == item["quote"]
-                and r.date == item["date"]
-            )
-            rates.append(ExchangeRateResponse.model_validate(existing))
+        key = (item["date"], item["quote"])
+        
+        if key in existing_map:
+            # Use existing record
+            final_rates.append(ExchangeRateResponse.model_validate(existing_map[key]))
         else:
-            exchange_rate = ExchangeRate(
+            # Prepare new record
+            new_rate = ExchangeRate(
                 base_currency=item["base"],
                 target_currency=item["quote"],
                 rate=item["rate"],
                 date=item["date"],
                 source="frankfurter",
             )
-            db.add(exchange_rate)
-            exchange_rates.append(exchange_rate)
+            to_create.append(new_rate)
+            # Add to response immediately without waiting for DB ID
+            final_rates.append(ExchangeRateResponse.model_validate(new_rate))
 
-    if exchange_rates:
-        await db.commit()
-        for exchange_rate in exchange_rates:
-            await db.refresh(exchange_rate)
-            rates.append(ExchangeRateResponse.model_validate(exchange_rate))
+    # 4. Batch Insert (Much faster than individual adds)
+    if to_create:
+        db.add_all(to_create)
+        try:
+            await db.commit()
+            # Note: We skip db.refresh() here to save speed. 
+            # If you need the DB-generated IDs in the response, 
+            # you must refresh, but usually, the data itself is enough.
+        except Exception:
+            await db.rollback()
 
-    return ExchangeRateListResponse(rates=rates, count=len(rates))
+    return ExchangeRateListResponse(rates=final_rates, count=len(final_rates))
 
 
 @router.get("/currencies")

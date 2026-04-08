@@ -13,8 +13,8 @@ class ExchangeRateBase(BaseModel):
 
 
 class ExchangeRateResponse(ExchangeRateBase):
-    id: UUID
-    created_at: datetime
+    id: UUID | None
+    created_at: datetime | None
 
     class Config:
         from_attributes = True
