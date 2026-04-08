@@ -52,7 +52,7 @@ async def get_latest_rates(
     rates = []
     exchange_rates = []
 
-    for item in external_data:
+    for item in external_data:  
         if quotes_list and item["quote"] not in quotes_list:
             continue
 
