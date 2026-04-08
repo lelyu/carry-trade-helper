@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from datetime import date
+from datetime import date, datetime
 from decimal import Decimal
 from uuid import UUID
 
@@ -14,7 +14,7 @@ class ExchangeRateBase(BaseModel):
 
 class ExchangeRateResponse(ExchangeRateBase):
     id: UUID
-    created_at: date
+    created_at: datetime
 
     class Config:
         from_attributes = True

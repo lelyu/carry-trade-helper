@@ -31,7 +31,7 @@ def internet_search(
     )
 
 
-def get_financial_news(query: str, max_results: int = 10) -> List[Dict]:
+def get_financial_news(query: str, max_results: int = 10) -> list[dict]:
     """
     Get financial news articles
 

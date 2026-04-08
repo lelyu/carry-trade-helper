@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, Query, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from datetime import date, timedelta
@@ -18,42 +18,69 @@ async def get_latest_rates(
     base: str = Query(default="USD"),
     quotes: str = Query(default=None),
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user),
 ):
     quotes_list = quotes.split(",") if quotes else None
 
-    cached_rates = await db.execute(
+    try:
+        external_data = await frankfurter_client.get_latest_rates(
+            base=base, quotes=quotes_list
+        )
+    except Exception as e:
+        raise HTTPException(
+            status_code=502, detail=f"Error fetching exchange rates: {str(e)}"
+        )
+
+    if not external_data:
+        return ExchangeRateListResponse(rates=[], count=0)
+
+    dates = {item["date"] for item in external_data}
+    target_currencies = [item["quote"] for item in external_data]
+
+    existing_rates = await db.execute(
         select(ExchangeRate)
-        .where(ExchangeRate.date == date.today())
+        .where(ExchangeRate.date.in_(dates))
         .where(ExchangeRate.base_currency == base)
+        .where(ExchangeRate.target_currency.in_(target_currencies))
     )
-    cached_rates = cached_rates.scalars().all()
+    existing_rates = existing_rates.scalars().all()
 
-    if cached_rates:
-        rates = [
-            ExchangeRateResponse.from_orm(rate)
-            for rate in cached_rates
-            if not quotes_list or rate.target_currency in quotes_list
-        ]
-        return ExchangeRateListResponse(rates=rates, count=len(rates))
-
-    external_data = await frankfurter_client.get_latest_rates(
-        base=base, quotes=quotes_list
-    )
+    existing_set = {
+        (r.base_currency, r.target_currency, r.date) for r in existing_rates
+    }
 
     rates = []
-    if external_data and "rates" in external_data:
-        for target, rate_value in external_data["rates"].items():
+    exchange_rates = []
+
+    for item in external_data:
+        if quotes_list and item["quote"] not in quotes_list:
+            continue
+
+        key = (item["base"], item["quote"], item["date"])
+
+        if key in existing_set:
+            existing = next(
+                r
+                for r in existing_rates
+                if r.base_currency == item["base"]
+                and r.target_currency == item["quote"]
+                and r.date == item["date"]
+            )
+            rates.append(ExchangeRateResponse.model_validate(existing))
+        else:
             exchange_rate = ExchangeRate(
-                base_currency=base,
-                target_currency=target,
-                rate=rate_value,
-                date=date.today(),
+                base_currency=item["base"],
+                target_currency=item["quote"],
+                rate=item["rate"],
+                date=item["date"],
             )
             db.add(exchange_rate)
-            rates.append(ExchangeRateResponse.from_orm(exchange_rate))
+            exchange_rates.append(exchange_rate)
 
+    if exchange_rates:
         await db.commit()
+        for exchange_rate in exchange_rates:
+            await db.refresh(exchange_rate)
+            rates.append(ExchangeRateResponse.model_validate(exchange_rate))
 
     return ExchangeRateListResponse(rates=rates, count=len(rates))
 
@@ -69,38 +96,64 @@ async def get_historical_rates(
 ):
     quotes_list = quotes.split(",")
 
-    cached_rates = await db.execute(
+    try:
+        external_data = await frankfurter_client.get_historical_rates(
+            base=base, quotes=quotes_list, from_date=from_date, to_date=to_date
+        )
+    except Exception as e:
+        raise HTTPException(
+            status_code=502, detail=f"Error fetching historical rates: {str(e)}"
+        )
+
+    if not external_data:
+        return ExchangeRateListResponse(rates=[], count=0)
+
+    dates = {item["date"] for item in external_data}
+    target_currencies = [item["quote"] for item in external_data]
+
+    existing_rates = await db.execute(
         select(ExchangeRate)
-        .where(ExchangeRate.date >= from_date)
-        .where(ExchangeRate.date <= to_date)
+        .where(ExchangeRate.date.in_(dates))
         .where(ExchangeRate.base_currency == base)
-        .where(ExchangeRate.target_currency.in_(quotes_list))
+        .where(ExchangeRate.target_currency.in_(target_currencies))
     )
-    cached_rates = cached_rates.scalars().all()
+    existing_rates = existing_rates.scalars().all()
 
-    if cached_rates:
-        rates = [ExchangeRateResponse.from_orm(rate) for rate in cached_rates]
-        return ExchangeRateListResponse(rates=rates, count=len(rates))
-
-    external_data = await frankfurter_client.get_historical_rates(
-        base=base, quotes=quotes_list, from_date=from_date, to_date=to_date
-    )
+    existing_set = {
+        (r.base_currency, r.target_currency, r.date) for r in existing_rates
+    }
 
     rates = []
-    if external_data:
-        for rate_data in external_data:
-            for target, rate_value in rate_data.get("rates", {}).items():
-                exchange_rate = ExchangeRate(
-                    base_currency=base,
-                    target_currency=target,
-                    rate=rate_value,
-                    date=rate_data.get("date"),
-                    source="frankfurter",
-                )
-                db.add(exchange_rate)
-                rates.append(ExchangeRateResponse.from_orm(exchange_rate))
+    exchange_rates = []
 
+    for item in external_data:
+        key = (item["base"], item["quote"], item["date"])
+
+        if key in existing_set:
+            existing = next(
+                r
+                for r in existing_rates
+                if r.base_currency == item["base"]
+                and r.target_currency == item["quote"]
+                and r.date == item["date"]
+            )
+            rates.append(ExchangeRateResponse.model_validate(existing))
+        else:
+            exchange_rate = ExchangeRate(
+                base_currency=item["base"],
+                target_currency=item["quote"],
+                rate=item["rate"],
+                date=item["date"],
+                source="frankfurter",
+            )
+            db.add(exchange_rate)
+            exchange_rates.append(exchange_rate)
+
+    if exchange_rates:
         await db.commit()
+        for exchange_rate in exchange_rates:
+            await db.refresh(exchange_rate)
+            rates.append(ExchangeRateResponse.model_validate(exchange_rate))
 
     return ExchangeRateListResponse(rates=rates, count=len(rates))
 
