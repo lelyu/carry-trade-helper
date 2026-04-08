@@ -1,45 +1,44 @@
-from typing import Dict, Optional
 from deepagents import create_deep_agent
 from app.core.config import settings
 from app.services.tavily_client import internet_search
 
 
-def get_exchange_rate(base: str, target: str) -> Dict:
+def get_exchange_rate(base: str, target: str) -> dict:
     """
     Get current exchange rate
-    
+
     Args:
         base: Base currency code
         target: Target currency code
-        
+
     Returns:
         Dictionary with exchange rate information
     """
     from app.services.frankfurter_client import frankfurter_client
     import asyncio
-    
+
     result = asyncio.run(frankfurter_client.get_rate(base, target))
     return {
         "base": base,
         "target": target,
         "rate": result.get("rate", 0),
-        "date": result.get("date")
+        "date": result.get("date"),
     }
 
 
-def get_interest_rate(currency: str) -> Dict:
+def get_interest_rate(currency: str) -> dict:
     """
     Get current interest rate for a currency
-    
+
     Args:
         currency: Currency code
-        
+
     Returns:
         Dictionary with interest rate information
     """
     from app.services.dbnomics_client import dbnomics_client
     import asyncio
-    
+
     CURRENCY_TO_COUNTRY = {
         "USD": "USA",
         "EUR": "EUR",
@@ -50,20 +49,20 @@ def get_interest_rate(currency: str) -> Dict:
         "CAD": "CAD",
         "NZD": "NZD",
         "CNY": "CHN",
-        "HKD": "HKG"
+        "HKD": "HKG",
     }
-    
+
     country = CURRENCY_TO_COUNTRY.get(currency, currency)
     results = asyncio.run(dbnomics_client.get_interest_rates([country]))
-    
+
     if results:
         return {
             "currency": currency,
             "country": country,
             "rate": results[0].get("rate", 0),
-            "date": results[0].get("date")
+            "date": results[0].get("date"),
         }
-    
+
     return {"currency": currency, "rate": None, "error": "Rate not found"}
 
 
@@ -103,20 +102,20 @@ Format your responses clearly with:
 Always emphasize risk management and never provide financial advice as guaranteed outcomes."""
 
 
-_carry_trade_agent: Optional[object] = None
+_carry_trade_agent: object | None = None
 
 
 def get_carry_trade_agent():
     """Get or create the carry trade agent (lazy initialization)"""
     global _carry_trade_agent
-    
+
     if _carry_trade_agent is None:
         _carry_trade_agent = create_deep_agent(
             model="google_genai:gemini-pro",
             tools=[internet_search, get_exchange_rate, get_interest_rate],
             system_prompt=carry_trade_system_prompt,
         )
-    
+
     return _carry_trade_agent
 
 

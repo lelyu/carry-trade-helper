@@ -1,6 +1,5 @@
 from pydantic import BaseModel
 from datetime import datetime
-from typing import List
 from uuid import UUID
 
 
@@ -14,11 +13,11 @@ class ChatMessageResponse(BaseModel):
     role: str
     content: str
     created_at: datetime
-    
+
     class Config:
         from_attributes = True
 
 
 class ChatHistoryResponse(BaseModel):
-    messages: List[ChatMessageResponse]
+    messages: list[ChatMessageResponse]
     count: int

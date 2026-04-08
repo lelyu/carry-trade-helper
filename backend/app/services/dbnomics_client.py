@@ -1,17 +1,14 @@
 import httpx
-from typing import List, Dict
 
 
 class DBnomicsClient:
     BASE_URL = "https://api.db.nomics.world/v22"
-    
+
     async def get_interest_rates(
-        self,
-        country_codes: List[str],
-        rate_type: str = "policy_rate"
-    ) -> List[Dict]:
+        self, country_codes: list[str], rate_type: str = "policy_rate"
+    ) -> list[dict]:
         results = []
-        
+
         country_provider_map = {
             "USA": ("FED", "FED/IRS/FED_FUNDS_RATE"),
             "EUR": ("ECB", "ECB/IRS/MAIN_REFINANCING_OPERATIONS"),
@@ -24,42 +21,42 @@ class DBnomicsClient:
             "CHN": ("PBOC", "PBOC/IRS/LENDING_RATE"),
             "HKG": ("HKMA", "HKMA/IRS/BASE_RATE"),
         }
-        
+
         for country in country_codes:
             if country in country_provider_map:
                 provider, series_code = country_provider_map[country]
-                
-                params = {
-                    "series_ids": series_code
-                }
-                
+
+                params = {"series_ids": series_code}
+
                 try:
                     async with httpx.AsyncClient() as client:
                         response = await client.get(
-                            f"{self.BASE_URL}/series",
-                            params=params,
-                            timeout=30.0
+                            f"{self.BASE_URL}/series", params=params, timeout=30.0
                         )
                         response.raise_for_status()
                         data = response.json()
-                        
+
                         if data.get("series") and data["series"].get("docs"):
                             latest = data["series"]["docs"][0]
-                            results.append({
-                                "country_code": country,
-                                "currency_code": country[:3] if len(country) >= 3 else country,
-                                "rate": float(latest.get("value", 0)),
-                                "rate_type": rate_type,
-                                "date": latest.get("period"),
-                                "provider_code": provider
-                            })
+                            results.append(
+                                {
+                                    "country_code": country,
+                                    "currency_code": country[:3]
+                                    if len(country) >= 3
+                                    else country,
+                                    "rate": float(latest.get("value", 0)),
+                                    "rate_type": rate_type,
+                                    "date": latest.get("period"),
+                                    "provider_code": provider,
+                                }
+                            )
                 except Exception as e:
                     print(f"Error fetching interest rate for {country}: {e}")
                     continue
-        
+
         return results
-    
-    async def get_providers(self) -> List[Dict]:
+
+    async def get_providers(self) -> list[dict]:
         async with httpx.AsyncClient() as client:
             response = await client.get(f"{self.BASE_URL}/providers")
             response.raise_for_status()

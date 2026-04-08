@@ -1,7 +1,6 @@
 from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
-from typing import List
 
 from app.core.database import get_db
 from app.core.security import get_current_user
@@ -17,16 +16,14 @@ router = APIRouter(prefix="/api/chat", tags=["chat"])
 async def send_message(
     message: ChatMessageCreate,
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(get_current_user),
 ):
     user_message = ChatMessage(
-        user_id=current_user.id,
-        role="user",
-        content=message.content
+        user_id=current_user.id, role="user", content=message.content
     )
     db.add(user_message)
     await db.commit()
-    
+
     chat_history = await db.execute(
         select(ChatMessage)
         .where(ChatMessage.user_id == current_user.id)
@@ -34,26 +31,21 @@ async def send_message(
         .limit(10)
     )
     chat_history = chat_history.scalars().all()[::-1]
-    
-    messages = [
-        {"role": msg.role, "content": msg.content}
-        for msg in chat_history
-    ]
-    
+
+    messages = [{"role": msg.role, "content": msg.content} for msg in chat_history]
+
     agent = get_carry_trade_agent()
     result = agent.invoke({"messages": messages})
-    
+
     assistant_content = result["messages"][-1].content
-    
+
     assistant_message = ChatMessage(
-        user_id=current_user.id,
-        role="assistant",
-        content=assistant_content
+        user_id=current_user.id, role="assistant", content=assistant_content
     )
     db.add(assistant_message)
     await db.commit()
     await db.refresh(assistant_message)
-    
+
     return ChatMessageResponse.from_orm(assistant_message)
 
 
@@ -62,7 +54,7 @@ async def get_chat_history(
     limit: int = 50,
     offset: int = 0,
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(get_current_user),
 ):
     result = await db.execute(
         select(ChatMessage)
@@ -72,8 +64,8 @@ async def get_chat_history(
         .offset(offset)
     )
     messages = result.scalars().all()[::-1]
-    
+
     return ChatHistoryResponse(
         messages=[ChatMessageResponse.from_orm(msg) for msg in messages],
-        count=len(messages)
+        count=len(messages),
     )
