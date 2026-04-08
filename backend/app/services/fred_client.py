@@ -1,6 +1,4 @@
 import httpx
-from datetime import date
-from typing import List, Dict
 
 from app.core.config import settings
 
@@ -35,8 +33,8 @@ class FredClient:
     }
 
     async def get_interest_rates(
-        self, country_codes: List[str], rate_type: str = "policy_rate"
-    ) -> List[Dict]:
+        self, country_codes: list[str], rate_type: str = "policy_rate"
+    ) -> list[dict]:
         """
         Fetch interest rates from FRED API for specified countries
 

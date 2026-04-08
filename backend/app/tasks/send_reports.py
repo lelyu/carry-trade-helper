@@ -1,5 +1,6 @@
 import asyncio
-from datetime import datetime, date
+from datetime import date
+from enum import Enum
 from sqlalchemy import select
 
 from app.tasks.celery_app import celery_app
@@ -10,10 +11,32 @@ from app.models.rates import ExchangeRate, InterestRate
 from app.services.resend_client import send_daily_report
 
 
+class EmailFrequency(str, Enum):
+    DAILY = "daily"
+    HOURLY = "hourly"
+    WEEKLY = "weekly"
+
+
 @celery_app.task
 def send_daily_reports():
     """Send daily reports to all active subscribers"""
-    return asyncio.run(_send_daily_reports())
+    return asyncio.run(_send_reports_by_frequency(EmailFrequency.DAILY))
+
+
+@celery_app.task
+def send_hourly_reports():
+    """Send hourly reports to subscribers with hourly frequency"""
+    return asyncio.run(_send_reports_by_frequency(EmailFrequency.HOURLY))
+
+
+async def _send_reports_by_frequency(frequency: EmailFrequency):
+    match frequency:
+        case EmailFrequency.DAILY:
+            return await _send_daily_reports()
+        case EmailFrequency.HOURLY:
+            return await _send_hourly_reports()
+        case _:
+            return {"status": "error", "message": f"Unknown frequency: {frequency}"}
 
 
 async def _send_daily_reports():
@@ -22,7 +45,7 @@ async def _send_daily_reports():
             result = await db.execute(
                 select(UserPreferences)
                 .where(UserPreferences.is_active == True)
-                .where(UserPreferences.email_frequency == "daily")
+                .where(UserPreferences.email_frequency == EmailFrequency.DAILY.value)
             )
             preferences = result.scalars().all()
 
@@ -59,19 +82,13 @@ async def _send_daily_reports():
             return {"status": "error", "message": str(e)}
 
 
-@celery_app.task
-def send_hourly_reports():
-    """Send hourly reports to subscribers with hourly frequency"""
-    return asyncio.run(_send_hourly_reports())
-
-
 async def _send_hourly_reports():
     async with async_session_maker() as db:
         try:
             result = await db.execute(
                 select(UserPreferences)
                 .where(UserPreferences.is_active == True)
-                .where(UserPreferences.email_frequency == "hourly")
+                .where(UserPreferences.email_frequency == EmailFrequency.HOURLY.value)
             )
             preferences = result.scalars().all()
 

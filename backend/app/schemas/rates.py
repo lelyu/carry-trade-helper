@@ -36,7 +36,7 @@ class InterestRateBase(BaseModel):
 
 class InterestRateResponse(InterestRateBase):
     id: UUID | None
-    created_at: date | None
+    created_at: datetime | None
 
     class Config:
         from_attributes = True
