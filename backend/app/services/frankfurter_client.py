@@ -3,6 +3,7 @@ from datetime import date
 from app.core.config import settings
 from app.schemas.frankfurter import FrankfurterRatesResponse
 
+from fastapi import Query
 
 class FrankfurterClient:
     BASE_URL = "https://api.frankfurter.dev/v2"
@@ -27,7 +28,8 @@ class FrankfurterClient:
             )
 
     async def get_historical_rates(
-        self, base: str, quotes: list[str], from_date: date, to_date: date
+        self, base: str, quotes: list[str], from_date: date, 
+    to_date: date
     ) -> list[dict]:
         params = {
             "base": base,

@@ -1,3 +1,4 @@
+from ast import alias
 from fastapi import APIRouter, Depends, Query, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
@@ -89,10 +90,9 @@ async def get_latest_rates(
 async def get_historical_rates(
     base: str = Query(default="USD"),
     quotes: str = Query(...),
-    from_date: date = Query(...),
-    to_date: date = Query(...),
+    from_date: date = Query(..., alias='from'),
+    to_date: date = Query(..., alias='to'),
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user),
 ):
     quotes_list = quotes.split(",")
 
