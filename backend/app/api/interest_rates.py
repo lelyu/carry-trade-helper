@@ -33,7 +33,7 @@ async def get_latest_rates(
     cached_rates = cached_rates.scalars().all()
 
     if cached_rates:
-        rates = [InterestRateResponse.from_orm(rate) for rate in cached_rates]
+        rates = [InterestRateResponse.model_validate(rate) for rate in cached_rates]
         return InterestRateListResponse(rates=rates, count=len(rates))
 
     external_data = await fred_client.get_interest_rates(country_codes=countries_list)
@@ -48,7 +48,7 @@ async def get_latest_rates(
             date=date.today(),
         )
         db.add(interest_rate)
-        rates.append(InterestRateResponse.from_orm(interest_rate))
+        rates.append(InterestRateResponse.model_validate(interest_rate))
 
     await db.commit()
 
@@ -73,7 +73,7 @@ async def get_historical_rates(
     cached_rates = cached_rates.scalars().all()
 
     if cached_rates:
-        rates = [InterestRateResponse.from_orm(rate) for rate in cached_rates]
+        rates = [InterestRateResponse.model_validate(rate) for rate in cached_rates]
         return InterestRateListResponse(rates=rates, count=len(rates))
 
     return InterestRateListResponse(rates=[], count=0)

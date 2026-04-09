@@ -46,7 +46,7 @@ async def send_message(
     await db.commit()
     await db.refresh(assistant_message)
 
-    return ChatMessageResponse.from_orm(assistant_message)
+    return ChatMessageResponse.model_validate(assistant_message)
 
 
 @router.get("/history", response_model=ChatHistoryResponse)
@@ -66,6 +66,6 @@ async def get_chat_history(
     messages = result.scalars().all()[::-1]
 
     return ChatHistoryResponse(
-        messages=[ChatMessageResponse.from_orm(msg) for msg in messages],
+        messages=[ChatMessageResponse.model_validate(msg) for msg in messages],
         count=len(messages),
     )

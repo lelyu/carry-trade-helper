@@ -11,7 +11,7 @@ A comprehensive platform for carry trade analysis featuring:
 ## Technology Stack
 
 ### Backend
-- **Framework**: FastAPI (async Python3.11+)
+- **Framework**: FastAPI (async Python 3.13+)
 - **Database**: PostgreSQL 15+with SQLAlchemy 2.0 (async)
 - **Task Queue**: Celery + Redis (6-hour scheduling)
 - **AI/Chat**: LangChain deep-agents + Google Gemini
@@ -36,11 +36,65 @@ A comprehensive platform for carry trade analysis featuring:
 
 ### Backend (Python)
 - Follow PEP8 with Black formatting
+- **Python Version**: 3.13+ (use modern syntax features)
 - Use type hints for all functions
 - Async/await patterns throughout
 - Repository pattern for data access
 - Pydantic v2 schemas for validation
 - Dependency injection via FastAPI's Depends()
+
+#### Modern Python Syntax (3.10+)
+
+**Type Annotations (PEP 585 & PEP 604):**
+```python
+# Use built-in generics instead of typing module
+list[str]          # not List[str]
+dict[str, int]     # not Dict[str, int]
+set[str]           # not Set[str]
+tuple[int, str]    # not Tuple[int, str]
+
+# Use | for union types
+str | None         # not Optional[str]
+int | str | None   # not Union[int, str, None]
+```
+
+**Pattern Matching (PEP 634):**
+```python
+# Prefer match/case for dispatch and enum handling
+match frequency:
+    case EmailFrequency.DAILY:
+        return await send_daily_report()
+    case EmailFrequency.HOURLY:
+        return await send_hourly_report()
+    case _:
+        raise ValueError(f"Unknown frequency: {frequency}")
+```
+
+#### Modern Python Syntax (3.12+)
+
+**Type Parameter Syntax (PEP 695):**
+```python
+# Generic functions/classes without TypeVar boilerplate
+def first[T](items: list[T]) -> T:
+    return items[0]
+
+class Stack[T]:
+    def __init__(self) -> None:
+        self._items: list[T] = []
+```
+
+#### Pydantic v2 Best Practices
+
+```python
+# Use model_validate() instead of deprecated from_orm()
+UserResponse.model_validate(user)    # not UserResponse.from_orm(user)
+
+# Use model_dump() instead of deprecated dict()
+user.model_dump()                    # not user.dict()
+
+# Use model_dump_json() for JSON serialization
+user.model_dump_json()               # not user.json()
+```
 
 ### Frontend (TypeScript/Vue)
 - Use `<script setup lang="ts">` syntax
