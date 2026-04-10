@@ -1,6 +1,11 @@
+import asyncio
+
 from deepagents import create_deep_agent
+
 from app.core.config import settings
 from app.services.tavily_client import internet_search
+from app.services.frankfurter_client import frankfurter_client
+from app.services.fred_client import fred_client
 
 
 def get_exchange_rate(base: str, target: str) -> dict:
@@ -14,9 +19,6 @@ def get_exchange_rate(base: str, target: str) -> dict:
     Returns:
         Dictionary with exchange rate information
     """
-    from app.services.frankfurter_client import frankfurter_client
-    import asyncio
-
     result = asyncio.run(frankfurter_client.get_rate(base, target))
     return {
         "base": base,
@@ -36,9 +38,6 @@ def get_interest_rate(currency: str) -> dict:
     Returns:
         Dictionary with interest rate information
     """
-    from app.services.fred_client import fred_client
-    import asyncio
-
     CURRENCY_TO_COUNTRY = {
         "USD": "USA",
         "EUR": "EUR",
@@ -111,7 +110,7 @@ def get_carry_trade_agent():
 
     if _carry_trade_agent is None:
         _carry_trade_agent = create_deep_agent(
-            model="google_genai:gemini-pro",
+            model="gemini-3-flash-preview",
             tools=[internet_search, get_exchange_rate, get_interest_rate],
             system_prompt=carry_trade_system_prompt,
         )
