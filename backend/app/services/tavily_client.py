@@ -1,10 +1,13 @@
 from typing import Literal
 from tavily import TavilyClient
 from app.core.config import settings
+from langchain.tools import tool
+
 
 tavily_client = TavilyClient(api_key=settings.TAVILY_API_KEY)
 
 
+@tool(parse_docstring=True)
 def internet_search(
     query: str,
     max_results: int = 5,
