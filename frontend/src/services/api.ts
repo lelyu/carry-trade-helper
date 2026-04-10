@@ -1,5 +1,6 @@
 import axios from 'axios'
-import type { User, AuthResponse } from '@/types'
+import type { User, AuthResponse, DeviceInfo, SessionsResponse } from '@/types'
+import { useAuthStore } from '@/stores/auth'
 
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL || 'http://localhost:8000',
@@ -9,12 +10,33 @@ const api = axios.create({
 })
 
 api.interceptors.request.use((config) => {
-  const token = localStorage.getItem('token')
+  const token = localStorage.getItem('access_token')
   if (token) {
     config.headers.Authorization = `Bearer ${token}`
   }
   return config
 })
+
+api.interceptors.response.use(
+  (response) => response,
+  async (error) => {
+    const originalRequest = error.config
+
+    if (error.response?.status === 401 && !originalRequest._retry) {
+      originalRequest._retry = true
+
+      const authStore = useAuthStore()
+      const refreshed = await authStore.attemptRefresh()
+
+      if (refreshed) {
+        originalRequest.headers.Authorization = `Bearer ${authStore.accessToken}`
+        return api(originalRequest)
+      }
+    }
+
+    return Promise.reject(error)
+  }
+)
 
 export const authApi = {
   requestMagicLink: async (email: string) => {
@@ -22,14 +44,39 @@ export const authApi = {
     return response.data
   },
 
-  verifyMagicLink: async (token: string): Promise<AuthResponse> => {
-    const response = await api.post('/auth/verify-magic-link', { token })
+  verifyMagicLink: async (token: string, deviceInfo?: DeviceInfo): Promise<AuthResponse> => {
+    const response = await api.post('/auth/verify-magic-link', {
+      token,
+      device_info: deviceInfo,
+    })
+    return response.data
+  },
+
+  refreshToken: async (refreshToken: string): Promise<AuthResponse> => {
+    const response = await api.post('/auth/refresh', { refresh_token: refreshToken })
     return response.data
   },
 
   getCurrentUser: async (): Promise<User> => {
     const response = await api.get('/auth/me')
     return response.data
+  },
+
+  logout: async (refreshToken: string) => {
+    await api.post('/auth/logout', { refresh_token: refreshToken })
+  },
+
+  logoutAll: async () => {
+    await api.post('/auth/logout-all')
+  },
+
+  getSessions: async (): Promise<SessionsResponse> => {
+    const response = await api.get('/auth/sessions')
+    return response.data
+  },
+
+  revokeSession: async (sessionId: string) => {
+    await api.post('/auth/revoke-session', { session_id: sessionId })
   },
 }
 

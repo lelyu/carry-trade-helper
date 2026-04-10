@@ -10,6 +10,20 @@ from app.schemas.frankfurter import (
     FrankfurterRateItem,
     FrankfurterRatesResponse,
 )
+from app.schemas.user import (
+    DeviceInfo,
+    UserBase,
+    UserCreate,
+    UserResponse,
+    MagicLinkRequest,
+    MagicLinkVerify,
+    TokenResponse,
+    RefreshTokenRequest,
+    SessionInfo,
+    SessionsResponse,
+    RevokeSessionRequest,
+    LogoutRequest,
+)
 
 __all__ = [
     "ExchangeRateBase",
@@ -20,4 +34,16 @@ __all__ = [
     "InterestRateListResponse",
     "FrankfurterRateItem",
     "FrankfurterRatesResponse",
+    "DeviceInfo",
+    "UserBase",
+    "UserCreate",
+    "UserResponse",
+    "MagicLinkRequest",
+    "MagicLinkVerify",
+    "TokenResponse",
+    "RefreshTokenRequest",
+    "SessionInfo",
+    "SessionsResponse",
+    "RevokeSessionRequest",
+    "LogoutRequest",
 ]

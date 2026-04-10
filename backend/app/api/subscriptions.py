@@ -47,7 +47,9 @@ async def create_preferences(
     if existing:
         raise HTTPException(status_code=400, detail="Preferences already exist")
 
-    preferences = UserPreferences(user_id=current_user.id, **preferences_data.dict())
+    preferences = UserPreferences(
+        user_id=current_user.id, **preferences_data.model_dump()
+    )
     db.add(preferences)
     await db.commit()
     await db.refresh(preferences)
@@ -69,7 +71,7 @@ async def update_preferences(
     if not preferences:
         raise HTTPException(status_code=404, detail="Preferences not found")
 
-    update_data = preferences_data.dict(exclude_unset=True)
+    update_data = preferences_data.model_dump(exclude_unset=True)
     for field, value in update_data.items():
         setattr(preferences, field, value)
 

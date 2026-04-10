@@ -1,9 +1,13 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { useSettingsStore } from '@/stores/settings'
+import { useAuthStore } from '@/stores/auth'
+import { authApi } from '@/services/api'
 import { cn } from '@/utils/utils.js'
+import type { Session } from '@/types'
 
 const settingsStore = useSettingsStore()
+const authStore = useAuthStore()
 
 const availablePairs = [
 	'EUR/USD',
@@ -27,6 +31,8 @@ const thresholds = ref({
 
 const message = ref('')
 const isError = ref(false)
+const sessions = ref<Session[]>([])
+const sessionsLoading = ref(false)
 
 const messageClass = computed(() => {
 	const classes: Record<string, boolean> = {
@@ -55,7 +61,54 @@ onMounted(async () => {
 			}
 		}
 	}
+
+	await fetchSessions()
 })
+
+const fetchSessions = async () => {
+	sessionsLoading.value = true
+	try {
+		const response = await authApi.getSessions()
+		sessions.value = response.sessions
+	} catch (e) {
+		console.error('Failed to fetch sessions:', e)
+	} finally {
+		sessionsLoading.value = false
+	}
+}
+
+const formatDate = (dateStr: string | null) => {
+	if (!dateStr) return 'Never'
+	const date = new Date(dateStr)
+	return date.toLocaleDateString() + ' ' + date.toLocaleTimeString()
+}
+
+const formatDeviceInfo = (deviceInfo: Record<string, unknown> | null) => {
+	if (!deviceInfo) return 'Unknown device'
+	const platform = deviceInfo.platform || 'Unknown platform'
+	const browser = deviceInfo.user_agent ? 
+		deviceInfo.user_agent.toString().split(' ')[0] : 'Unknown browser'
+	return `${browser} on ${platform}`
+}
+
+const revokeSession = async (sessionId: string) => {
+	try {
+		await authApi.revokeSession(sessionId)
+		await fetchSessions()
+	} catch (e) {
+		console.error('Failed to revoke session:', e)
+	}
+}
+
+const logoutAllSessions = async () => {
+	if (!confirm('Are you sure you want to log out all other sessions?')) return
+	try {
+		await authStore.logoutAll()
+		await fetchSessions()
+	} catch (e) {
+		console.error('Failed to logout all sessions:', e)
+	}
+}
 
 const saveEmailPreferences = async () => {
 		const result = await settingsStore.updatePreferences({
@@ -207,6 +260,62 @@ const showMessage = (success: boolean) => {
 
 		<div v-if="message" :class="cn('mt-4 p-4 rounded', messageClass)">
 			{{ message }}
+		</div>
+
+		<div class="bg-white rounded-lg shadow-md p-6 mt-6">
+			<h2 class="text-xl font-semibold mb-4">Active Sessions</h2>
+			<p class="text-gray-600 mb-4">
+				Manage your active sessions across different devices:
+			</p>
+
+			<div v-if="sessionsLoading" class="text-center py-4">
+				<div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+			</div>
+
+			<div v-else-if="sessions.length === 0" class="text-gray-500 text-center py-4">
+				No active sessions
+			</div>
+
+			<div v-else class="space-y-3">
+				<div
+					v-for="session in sessions"
+					:key="session.id"
+					class="border rounded-lg p-4 flex items-center justify-between">
+					<div>
+						<div class="font-medium">
+							{{ formatDeviceInfo(session.device_info) }}
+						</div>
+						<div class="text-sm text-gray-500">
+							IP: {{ session.ip_address || 'Unknown' }}
+						</div>
+						<div class="text-sm text-gray-500">
+							Last active: {{ formatDate(session.last_used_at) }}
+						</div>
+						<div class="text-sm text-gray-500">
+							Expires: {{ formatDate(session.expires_at) }}
+						</div>
+					</div>
+					<div>
+						<span
+							v-if="session.is_current"
+							class="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm">
+							Current
+						</span>
+						<button
+							v-else
+							@click="revokeSession(session.id)"
+							class="px-3 py-1 bg-red-100 text-red-800 rounded-full text-sm hover:bg-red-200">
+							Revoke
+						</button>
+					</div>
+				</div>
+			</div>
+
+			<button
+				@click="logoutAllSessions"
+				class="mt-4 px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition">
+				Log out all other sessions
+			</button>
 		</div>
 	</div>
 </template>

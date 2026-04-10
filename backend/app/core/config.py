@@ -11,8 +11,9 @@ class Settings(BaseSettings):
     SECRET_KEY: str
     FRONTEND_URL: str = "http://localhost:3000"
     EMAIL_DOMAIN: str = "localhost"
-    ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 15
     MAGIC_LINK_EXPIRE_MINUTES: int = 15
+    REFRESH_TOKEN_EXPIRE_DAYS: int = 14
 
     SUPPORTED_CURRENCIES: list[str] = [
         "EUR",

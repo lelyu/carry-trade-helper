@@ -1,4 +1,3 @@
-from ast import alias
 from fastapi import APIRouter, Depends, Query, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
@@ -52,7 +51,7 @@ async def get_latest_rates(
     rates = []
     exchange_rates = []
 
-    for item in external_data:  
+    for item in external_data:
         if quotes_list and item["quote"] not in quotes_list:
             continue
 
@@ -90,15 +89,15 @@ async def get_latest_rates(
 async def get_historical_rates(
     base: str = Query(default="USD", max_length=3),
     quotes: str = Query(...),
-    from_date: date = Query(..., alias='from'),
-    to_date: date = Query(..., alias='to'),
+    from_date: date = Query(..., alias="from"),
+    to_date: date = Query(..., alias="to"),
     db: AsyncSession = Depends(get_db),
 ):
     # 1. Validation: Prevent the 5-year JSON crash
     if (to_date - from_date).days > 366:
         raise HTTPException(
-            status_code=400, 
-            detail="Date range too wide. Please limit requests to 1 year."
+            status_code=400,
+            detail="Date range too wide. Please limit requests to 1 year.",
         )
 
     quotes_list = [q.strip().upper() for q in quotes.split(",")]
@@ -118,15 +117,15 @@ async def get_historical_rates(
     # 3. Optimized Database Logic
     # We fetch existing records to avoid duplicates
     dates = {item["date"] for item in external_data}
-    
+
     stmt = select(ExchangeRate).where(
         ExchangeRate.date.in_(dates),
         ExchangeRate.base_currency == base,
-        ExchangeRate.target_currency.in_(quotes_list)
+        ExchangeRate.target_currency.in_(quotes_list),
     )
     result = await db.execute(stmt)
     existing_records = result.scalars().all()
-    
+
     # Create a lookup set for fast O(1) checking
     existing_map = {(r.date, r.target_currency): r for r in existing_records}
 
@@ -135,7 +134,7 @@ async def get_historical_rates(
 
     for item in external_data:
         key = (item["date"], item["quote"])
-        
+
         if key in existing_map:
             # Use existing record
             final_rates.append(ExchangeRateResponse.model_validate(existing_map[key]))
@@ -157,8 +156,8 @@ async def get_historical_rates(
         db.add_all(to_create)
         try:
             await db.commit()
-            # Note: We skip db.refresh() here to save speed. 
-            # If you need the DB-generated IDs in the response, 
+            # Note: We skip db.refresh() here to save speed.
+            # If you need the DB-generated IDs in the response,
             # you must refresh, but usually, the data itself is enough.
         except Exception:
             await db.rollback()
