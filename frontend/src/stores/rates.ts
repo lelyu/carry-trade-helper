@@ -7,6 +7,7 @@ export const useRatesStore = defineStore('rates', () => {
   const exchangeRates = ref<ExchangeRate[]>([])
   const interestRates = ref<InterestRate[]>([])
   const historicalExchangeRates = ref<ExchangeRate[]>([])
+  const supportedCurrencies = ref<Record<string, string>>({})
   const loading = ref(false)
   const error = ref<string | null>(null)
 
@@ -76,15 +77,26 @@ export const useRatesStore = defineStore('rates', () => {
     }
   }
 
+  const fetchSupportedCurrencies = async () => {
+    try {
+      const response = await exchangeRatesApi.getCurrencies()
+      supportedCurrencies.value = response.currencies
+    } catch (err) {
+      console.error('Failed to fetch supported currencies', err)
+    }
+  }
+
   return {
     exchangeRates,
     interestRates,
     historicalExchangeRates,
+    supportedCurrencies,
     loading,
     error,
     fetchLatestExchangeRates,
     fetchLatestInterestRates,
     fetchHistoricalExchangeRates,
-    fetchHistoricalInterestRates
+    fetchHistoricalInterestRates,
+    fetchSupportedCurrencies
   }
 })

@@ -82,3 +82,6 @@ coverage.xml
 # Celery
 celerybeat-schedule
 celerybeat.pid
+
+celerybeat-schedule*
+celerybeat.pid

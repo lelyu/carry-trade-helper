@@ -12,6 +12,15 @@ from app.services.frankfurter_client import frankfurter_client
 
 router = APIRouter(prefix="/api/exchange-rates", tags=["exchange-rates"])
 
+# Supported quote currencies (major currencies + commonly traded ones)
+# These are currencies with reasonable exchange rates (< 10000) and stable markets
+SUPPORTED_CURRENCIES = {
+    'USD', 'EUR', 'GBP', 'JPY', 'CHF', 'AUD', 'CAD', 'NZD', 'CNY', 'HKD',
+    'SGD', 'SEK', 'NOK', 'DKK', 'KRW', 'MXN', 'INR', 'BRL', 'RUB', 'ZAR',
+    'TRY', 'THB', 'TWD', 'AED', 'SAR', 'ILS', 'PLN', 'CZK', 'HUF', 'RON',
+    'BGN', 'HRK', 'ISK', 'CLP', 'COP', 'PEN', 'PHP', 'VND', 'IDR', 'MYR'
+}
+
 
 @router.get("/latest", response_model=ExchangeRateListResponse)
 async def get_latest_rates(
@@ -32,6 +41,18 @@ async def get_latest_rates(
 
     if not external_data:
         return ExchangeRateListResponse(rates=[], count=0)
+
+    # Filter out unsupported currencies to prevent database overflow errors
+    if quotes_list is None:
+        external_data = [
+            item for item in external_data 
+            if item["quote"] in SUPPORTED_CURRENCIES
+        ]
+    else:
+        external_data = [
+            item for item in external_data 
+            if item["quote"] in quotes_list and item["quote"] in SUPPORTED_CURRENCIES
+        ]
 
     dates = {item["date"] for item in external_data}
     target_currencies = [item["quote"] for item in external_data]
@@ -102,7 +123,13 @@ async def get_historical_rates(
 
     quotes_list = [q.strip().upper() for q in quotes.split(",")]
 
-    # 2. Fetch Data
+    # 2. Filter to supported currencies only
+    quotes_list = [q for q in quotes_list if q in SUPPORTED_CURRENCIES]
+    
+    if not quotes_list:
+        return ExchangeRateListResponse(rates=[], count=0)
+
+    # 3. Fetch Data
     try:
         external_data = await frankfurter_client.get_historical_rates(
             base=base, quotes=quotes_list, from_date=from_date, to_date=to_date
@@ -114,7 +141,7 @@ async def get_historical_rates(
     if not external_data:
         return ExchangeRateListResponse(rates=[], count=0)
 
-    # 3. Optimized Database Logic
+    # 4. Optimized Database Logic
     # We fetch existing records to avoid duplicates
     dates = {item["date"] for item in external_data}
 

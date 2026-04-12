@@ -12,7 +12,7 @@ class ExchangeRate(Base):
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     base_currency = Column(String(3), nullable=False)
     target_currency = Column(String(3), nullable=False)
-    rate = Column(DECIMAL(10, 6), nullable=False)
+    rate = Column(DECIMAL(20, 6), nullable=False)
     date = Column(Date, nullable=False)
     source = Column(String(50), default="frankfurter")
     created_at = Column(

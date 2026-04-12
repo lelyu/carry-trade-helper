@@ -1,13 +1,11 @@
 import uuid
 import secrets
+import hashlib
 
 from jose import jwt, JWTError
-from passlib.context import CryptContext
 from datetime import datetime, timezone, timedelta
 
 from app.core.config import settings
-
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 
 def generate_refresh_token() -> str:
@@ -15,11 +13,13 @@ def generate_refresh_token() -> str:
 
 
 def hash_token(token: str) -> str:
-    return pwd_context.hash(token)
+    """Hash a token using SHA256 (suitable for tokens, not passwords)."""
+    return hashlib.sha256(token.encode()).hexdigest()
 
 
 def verify_token(plain_token: str, hashed_token: str) -> bool:
-    return pwd_context.verify(plain_token, hashed_token)
+    """Verify a token against its SHA256 hash."""
+    return hashlib.sha256(plain_token.encode()).hexdigest() == hashed_token
 
 
 def is_token_expired(expires_at: datetime) -> bool:

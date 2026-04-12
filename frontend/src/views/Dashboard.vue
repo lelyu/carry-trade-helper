@@ -3,13 +3,13 @@ import { ref, computed, onMounted, watch } from 'vue'
 import { useRatesStore } from '@/stores/rates'
 import ExchangeRateChart from '@/components/charts/ExchangeRateChart.vue'
 import InterestRateChart from '@/components/charts/InterestRateChart.vue'
+import ExchangeRatePanel from '@/components/panels/ExchangeRatePanel.vue'
+import InterestRatePanel from '@/components/panels/InterestRatePanel.vue'
 
 const ratesStore = useRatesStore()
 
-// Component title
 const title = 'Carry Trade Analysis'
 
-// Supported currencies with metadata
 const currencyInfo: Record<string, { country: string; name: string }> = {
   USD: { country: 'USA', name: 'US Dollar' },
   EUR: { country: 'EU', name: 'Euro' },
@@ -23,13 +23,9 @@ const currencyInfo: Record<string, { country: string; name: string }> = {
   HKD: { country: 'Hong Kong', name: 'Hong Kong Dollar' }
 }
 
-const currencies = Object.keys(currencyInfo)
-
-// Currency selection
 const selectedBase = ref('USD')
 const selectedTarget = ref('EUR')
 
-// Computed: Current exchange rate
 const currentRate = computed(() => {
   const rate = ratesStore.exchangeRates.find(
     r => r.base_currency === selectedBase.value && 
@@ -38,7 +34,6 @@ const currentRate = computed(() => {
   return rate ? parseFloat(String(rate.rate)) : null
 })
 
-// Computed: Last updated
 const lastUpdated = computed(() => {
   const rate = ratesStore.exchangeRates.find(
     r => r.base_currency === selectedBase.value && 
@@ -47,7 +42,6 @@ const lastUpdated = computed(() => {
   return rate ? new Date(rate.created_at) : null
 })
 
-// Computed: Base currency interest rate
 const baseInterestRate = computed(() => {
   const rate = ratesStore.interestRates.find(
     r => r.currency_code === selectedBase.value
@@ -55,7 +49,6 @@ const baseInterestRate = computed(() => {
   return rate ? parseFloat(String(rate.rate)) : null
 })
 
-// Computed: Target currency interest rate
 const targetInterestRate = computed(() => {
   const rate = ratesStore.interestRates.find(
     r => r.currency_code === selectedTarget.value
@@ -63,7 +56,6 @@ const targetInterestRate = computed(() => {
   return rate ? parseFloat(String(rate.rate)) : null
 })
 
-// Computed: Interest rate differential
 const interestDifferential = computed(() => {
   if (baseInterestRate.value !== null && targetInterestRate.value !== null) {
     return baseInterestRate.value - targetInterestRate.value
@@ -71,7 +63,6 @@ const interestDifferential = computed(() => {
   return null
 })
 
-// Computed: Carry trade assessment
 const carryTradeAssessment = computed(() => {
   if (interestDifferential.value === null) return null
   
@@ -102,7 +93,6 @@ const carryTradeAssessment = computed(() => {
   }
 })
 
-// Computed: Exchange rate chart data (last 90 days)
 const exchangeRateChartData = computed(() => {
   const ninetyDaysAgo = new Date()
   ninetyDaysAgo.setDate(ninetyDaysAgo.getDate() - 90)
@@ -120,7 +110,6 @@ const exchangeRateChartData = computed(() => {
     .sort((a, b) => a.date.getTime() - b.date.getTime())
 })
 
-// Computed: Interest rate comparison data
 const interestRateChartData = computed(() => {
   const data = []
   
@@ -143,7 +132,6 @@ const interestRateChartData = computed(() => {
   return data
 })
 
-// Computed: Summary statistics
 const summaryStats = computed(() => {
   if (exchangeRateChartData.value.length === 0) return null
   
@@ -163,49 +151,46 @@ const summaryStats = computed(() => {
   }
 })
 
-// Helper: Get date 90 days ago
 const getLast90Days = () => {
   const date = new Date()
   date.setDate(date.getDate() - 90)
   return date
 }
 
-// Methods: Fetch data
-const fetchAllData = async () => {
+const fetchHistoricalData = async () => {
   const ninetyDaysAgo = getLast90Days()
   const today = new Date()
   
-  await Promise.all([
-    ratesStore.fetchLatestExchangeRates(selectedBase.value),
-    ratesStore.fetchLatestInterestRates(),
-    ratesStore.fetchHistoricalExchangeRates(
-      selectedBase.value,
-      selectedTarget.value,
-      ninetyDaysAgo.toISOString().split('T')[0],
-      today.toISOString().split('T')[0]
-    )
-  ])
+  await ratesStore.fetchHistoricalExchangeRates(
+    selectedBase.value,
+    selectedTarget.value,
+    ninetyDaysAgo.toISOString().split('T')[0],
+    today.toISOString().split('T')[0]
+  )
 }
 
-// Manual refresh
-const refreshRates = async () => {
-  await fetchAllData()
+const handleBaseCurrencyChange = async (base: string) => {
+  selectedBase.value = base
+  await fetchHistoricalData()
 }
 
-// Lifecycle: Fetch on mount
+const handleQuoteSelect = async (target: string) => {
+  selectedTarget.value = target
+  await fetchHistoricalData()
+}
+
 onMounted(async () => {
-  await fetchAllData()
+  await ratesStore.fetchLatestInterestRates()
+  await fetchHistoricalData()
 })
 
-// Watchers: Refetch on currency change
 watch([selectedBase, selectedTarget], async () => {
-  await fetchAllData()
+  await fetchHistoricalData()
 })
 </script>
 
 <template>
   <div class="max-w-7xl mx-auto">
-    <!-- Header -->
     <div class="mb-6">
       <h1 class="text-3xl font-bold text-gray-900">{{ title }}</h1>
       <p class="mt-2 text-gray-600">
@@ -213,80 +198,19 @@ watch([selectedBase, selectedTarget], async () => {
       </p>
     </div>
 
-    <!-- Loading Skeleton -->
-    <div v-if="ratesStore.loading && !currentRate" class="space-y-6">
-      <div class="animate-pulse">
-        <div class="h-48 bg-gray-200 rounded-lg"></div>
-      </div>
-      <div class="animate-pulse">
-        <div class="h-64 bg-gray-200 rounded-lg"></div>
-      </div>
-      <div class="grid grid-cols-2 gap-6">
-        <div class="animate-pulse">
-          <div class="h-96 bg-gray-200 rounded-lg"></div>
-        </div>
-        <div class="animate-pulse">
-          <div class="h-96 bg-gray-200 rounded-lg"></div>
-        </div>
-      </div>
-    </div>
+    <div class="space-y-6">
+      <ExchangeRatePanel
+        @baseCurrencyChange="handleBaseCurrencyChange"
+        @quoteSelect="handleQuoteSelect"
+      />
 
-    <!-- Main Content -->
-    <div v-else class="space-y-6">
-      <!-- Currency Selection Panel -->
-      <div class="bg-white rounded-lg shadow-md p-6">
-        <h2 class="text-xl font-semibold mb-4">Currency Pair Selection</h2>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <!-- Base Currency -->
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-2">
-              Base Currency (Long Position)
-            </label>
-            <select 
-              v-model="selectedBase"
-              class="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-            >
-              <option v-for="currency in currencies" :key="currency" :value="currency">
-                {{ currency }} - {{ currencyInfo[currency].name }} ({{ currencyInfo[currency].country }})
-              </option>
-            </select>
-          </div>
+      <InterestRatePanel />
 
-          <!-- Target Currency -->
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-2">
-              Target Currency (Short Position)
-            </label>
-            <select 
-              v-model="selectedTarget"
-              class="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-            >
-              <option v-for="currency in currencies" :key="currency" :value="currency">
-                {{ currency }} - {{ currencyInfo[currency].name }} ({{ currencyInfo[currency].country }})
-              </option>
-            </select>
-          </div>
-        </div>
-
-        <div class="mt-4 flex justify-end">
-          <button
-            @click="refreshRates"
-            :disabled="ratesStore.loading"
-            class="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {{ ratesStore.loading ? 'Refreshing...' : 'Refresh Rates' }}
-          </button>
-        </div>
-      </div>
-
-      <!-- Error Message -->
       <div v-if="ratesStore.error" class="bg-red-50 border border-red-200 rounded-lg p-4">
         <p class="text-red-800">{{ ratesStore.error }}</p>
       </div>
 
-      <!-- Key Metrics Cards -->
       <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <!-- Exchange Rate -->
         <div class="bg-white rounded-lg shadow-md p-6">
           <p class="text-sm text-gray-600 mb-1">Exchange Rate</p>
           <p class="text-3xl font-bold text-gray-900">
@@ -297,7 +221,6 @@ watch([selectedBase, selectedTarget], async () => {
           </p>
         </div>
 
-        <!-- Base Interest Rate -->
         <div class="bg-white rounded-lg shadow-md p-6">
           <p class="text-sm text-gray-600 mb-1">Base Interest Rate</p>
           <p class="text-3xl font-bold text-gray-900">
@@ -306,7 +229,6 @@ watch([selectedBase, selectedTarget], async () => {
           <p class="text-sm text-gray-500 mt-1">{{ currencyInfo[selectedBase]?.country }}</p>
         </div>
 
-        <!-- Target Interest Rate -->
         <div class="bg-white rounded-lg shadow-md p-6">
           <p class="text-sm text-gray-600 mb-1">Target Interest Rate</p>
           <p class="text-3xl font-bold text-gray-900">
@@ -315,7 +237,6 @@ watch([selectedBase, selectedTarget], async () => {
           <p class="text-sm text-gray-500 mt-1">{{ currencyInfo[selectedTarget]?.country }}</p>
         </div>
 
-        <!-- Interest Differential -->
         <div class="bg-white rounded-lg shadow-md p-6">
           <p class="text-sm text-gray-600 mb-1">Interest Rate Spread</p>
           <p 
@@ -327,7 +248,6 @@ watch([selectedBase, selectedTarget], async () => {
         </div>
       </div>
 
-      <!-- Carry Trade Assessment -->
       <div 
         v-if="carryTradeAssessment" 
         :class="[carryTradeAssessment.bgColor, 'border rounded-lg shadow-md p-6']"
@@ -355,7 +275,6 @@ watch([selectedBase, selectedTarget], async () => {
         </div>
       </div>
 
-      <!-- Summary Statistics -->
       <div v-if="summaryStats" class="bg-white rounded-lg shadow-md p-6">
         <h3 class="text-lg font-semibold mb-4">Rate Statistics (90-Day Period)</h3>
         <div class="grid grid-cols-2 md:grid-cols-5 gap-4">
@@ -382,9 +301,7 @@ watch([selectedBase, selectedTarget], async () => {
         </div>
       </div>
 
-      <!-- Charts Section -->
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <!-- Exchange Rate History Chart -->
         <div class="bg-white rounded-lg shadow-md p-6">
           <h3 class="text-lg font-semibold mb-4">
             {{ selectedBase }}/{{ selectedTarget }} Exchange Rate (90 Days)
@@ -399,7 +316,6 @@ watch([selectedBase, selectedTarget], async () => {
           </div>
         </div>
 
-        <!-- Interest Rate Comparison Chart -->
         <div class="bg-white rounded-lg shadow-md p-6">
           <h3 class="text-lg font-semibold mb-4">Interest Rate Comparison</h3>
           <InterestRateChart 
@@ -413,7 +329,6 @@ watch([selectedBase, selectedTarget], async () => {
         </div>
       </div>
 
-      <!-- Last Updated -->
       <div v-if="lastUpdated" class="flex items-center text-sm text-gray-500">
         Last updated: {{ lastUpdated.toLocaleString() }}
       </div>

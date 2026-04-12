@@ -90,7 +90,7 @@ export const exchangeRatesApi = {
 
   getHistorical: async (base: string, target: string, from: string, to: string) => {
     const response = await api.get('/api/exchange-rates/historical', {
-      params: { base, quotes: target, from_date: from, to_date: to }
+      params: { base, quotes: target, from: from, to: to }
     })
     return response.data
   },
