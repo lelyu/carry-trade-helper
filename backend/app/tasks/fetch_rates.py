@@ -24,22 +24,22 @@ async def _fetch_and_cache_rates():
                 base="USD", quotes=settings.SUPPORTED_CURRENCIES
             )
 
-            if exchange_data and "rates" in exchange_data:
-                for target, rate_value in exchange_data["rates"].items():
+            if exchange_data:
+                for item in exchange_data:
                     existing = await db.execute(
                         select(ExchangeRate)
-                        .where(ExchangeRate.base_currency == "USD")
-                        .where(ExchangeRate.target_currency == target)
-                        .where(ExchangeRate.date == date.today())
+                        .where(ExchangeRate.base_currency == item["base"])
+                        .where(ExchangeRate.target_currency == item["quote"])
+                        .where(ExchangeRate.date == item["date"])
                     )
                     existing = existing.scalar_one_or_none()
 
                     if not existing:
                         rate = ExchangeRate(
-                            base_currency="USD",
-                            target_currency=target,
-                            rate=rate_value,
-                            date=date.today(),
+                            base_currency=item["base"],
+                            target_currency=item["quote"],
+                            rate=item["rate"],
+                            date=item["date"],
                         )
                         db.add(rate)
 

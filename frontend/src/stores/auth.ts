@@ -15,9 +15,8 @@ export const useAuthStore = defineStore('auth', () => {
 
   const isAuthenticated = computed(() => {
     if (!accessToken.value) return false
-    if (tokenExpiry.value && Date.now() > tokenExpiry.value) {
-      return false
-    }
+    if (!tokenExpiry.value) return false
+    if (Date.now() > tokenExpiry.value) return false
     return true
   })
 

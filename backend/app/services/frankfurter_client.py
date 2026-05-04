@@ -3,8 +3,6 @@ from datetime import date
 from app.core.config import settings
 from app.schemas.frankfurter import FrankfurterRatesResponse
 
-from fastapi import Query
-
 class FrankfurterClient:
     BASE_URL = "https://api.frankfurter.dev/v2"
 

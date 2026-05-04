@@ -1,5 +1,5 @@
 import axios from 'axios'
-import type { User, AuthResponse, DeviceInfo, SessionsResponse } from '@/types'
+import type { User, AuthResponse, DeviceInfo, SessionsResponse, PreferencesUpdate } from '@/types'
 import { useAuthStore } from '@/stores/auth'
 
 const api = axios.create({
@@ -22,8 +22,8 @@ api.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config
 
-    if (error.response?.status === 401 && !originalRequest._retry) {
-      originalRequest._retry = true
+    if (error.response?.status === 401 && !(originalRequest as any)._retry) {
+      (originalRequest as any)._retry = true
 
       const authStore = useAuthStore()
       const refreshed = await authStore.attemptRefresh()
@@ -122,12 +122,12 @@ export const preferencesApi = {
     return response.data
   },
 
-  create: async (data: any) => {
+  create: async (data: PreferencesUpdate) => {
     const response = await api.post('/api/preferences', data)
     return response.data
   },
 
-  update: async (data: any) => {
+  update: async (data: PreferencesUpdate) => {
     const response = await api.put('/api/preferences', data)
     return response.data
   },

@@ -57,7 +57,7 @@ async def send_daily_report(to: str, report_data: dict):
         </html>
     """
 
-    resend.Email.send(
+    resend.Emails.send(
         {
             "from": f"Carry Trade Helper <reports@{settings.EMAIL_DOMAIN}>",
             "to": [to],

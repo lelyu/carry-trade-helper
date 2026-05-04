@@ -16,7 +16,6 @@ export interface InterestRate {
   rate_type: string | null
   date: string
   source: string
-  provider_code: string | null
   created_at: string
 }
 

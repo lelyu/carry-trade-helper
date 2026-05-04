@@ -7,6 +7,7 @@ export const useRatesStore = defineStore('rates', () => {
   const exchangeRates = ref<ExchangeRate[]>([])
   const interestRates = ref<InterestRate[]>([])
   const historicalExchangeRates = ref<ExchangeRate[]>([])
+  const historicalInterestRates = ref<InterestRate[]>([])
   const supportedCurrencies = ref<Record<string, string>>({})
   const loading = ref(false)
   const error = ref<string | null>(null)
@@ -67,6 +68,7 @@ export const useRatesStore = defineStore('rates', () => {
     error.value = null
     try {
       const response = await interestRatesApi.getHistorical(countries, from, to)
+      historicalInterestRates.value = response.rates
       return response.rates
     } catch (err) {
       error.value = 'Failed to fetch historical interest rates'
@@ -90,6 +92,7 @@ export const useRatesStore = defineStore('rates', () => {
     exchangeRates,
     interestRates,
     historicalExchangeRates,
+    historicalInterestRates,
     supportedCurrencies,
     loading,
     error,

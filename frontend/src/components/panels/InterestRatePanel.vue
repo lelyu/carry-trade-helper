@@ -7,15 +7,13 @@ const ratesStore = useRatesStore()
 
 const currencyInfo: Record<string, { country: string; name: string; code: string }> = {
   USD: { country: 'USA', name: 'US Dollar', code: 'USD' },
-  EUR: { country: 'EU', name: 'Euro', code: 'EUR' },
-  GBP: { country: 'UK', name: 'British Pound', code: 'GBP' },
-  JPY: { country: 'Japan', name: 'Japanese Yen', code: 'JPY' },
-  CHF: { country: 'Switzerland', name: 'Swiss Franc', code: 'CHF' },
-  AUD: { country: 'Australia', name: 'Australian Dollar', code: 'AUD' },
-  CAD: { country: 'Canada', name: 'Canadian Dollar', code: 'CAD' },
-  NZD: { country: 'New Zealand', name: 'New Zealand Dollar', code: 'NZD' },
-  CNY: { country: 'China', name: 'Chinese Yuan', code: 'CNY' },
-  HKD: { country: 'Hong Kong', name: 'Hong Kong Dollar', code: 'HKD' }
+  EUR: { country: 'EUR', name: 'Euro', code: 'EUR' },
+  GBP: { country: 'GBR', name: 'British Pound', code: 'GBP' },
+  JPY: { country: 'JPN', name: 'Japanese Yen', code: 'JPY' },
+  CHF: { country: 'CHF', name: 'Swiss Franc', code: 'CHF' },
+  AUD: { country: 'AUD', name: 'Australian Dollar', code: 'AUD' },
+  CAD: { country: 'CAD', name: 'Canadian Dollar', code: 'CAD' },
+  NZD: { country: 'NZD', name: 'New Zealand Dollar', code: 'NZD' }
 }
 
 const selectedCurrencies = ref<string[]>(['USD', 'EUR', 'GBP', 'JPY', 'CHF', 'AUD', 'CAD', 'NZD'])

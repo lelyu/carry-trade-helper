@@ -3,7 +3,7 @@ import { ref, computed, onMounted } from 'vue'
 import { useSettingsStore } from '@/stores/settings'
 import { useAuthStore } from '@/stores/auth'
 import { authApi } from '@/services/api'
-import { cn } from '@/utils/utils.js'
+import { cn } from '@/utils/utils'
 import type { Session } from '@/types'
 
 const settingsStore = useSettingsStore()

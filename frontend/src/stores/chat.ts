@@ -13,13 +13,6 @@ export const useChatStore = defineStore('chat', () => {
     error.value = null
     try {
       const response = await chatApi.sendMessage(content)
-      messages.value.push({
-        id: response.id,
-        user_id: response.user_id,
-        role: 'user',
-        content: content,
-        created_at: new Date().toISOString()
-      })
       messages.value.push(response)
     } catch (err) {
       error.value = 'Failed to send message'

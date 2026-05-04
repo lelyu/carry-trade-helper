@@ -34,7 +34,7 @@ class InterestRate(Base):
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     country_code = Column(String(3), nullable=False)
     currency_code = Column(String(3), nullable=False)
-    rate = Column(DECIMAL(5, 2), nullable=False)
+    rate = Column(DECIMAL(10, 6), nullable=False)
     rate_type = Column(String(50), nullable=True)
     date = Column(Date, nullable=False)
     source = Column(String(50), default="fred")

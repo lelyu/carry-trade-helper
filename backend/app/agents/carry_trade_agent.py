@@ -19,7 +19,18 @@ def get_exchange_rate(base: str, target: str) -> dict:
     Returns:
         Dictionary with exchange rate information
     """
-    result = asyncio.run(frankfurter_client.get_rate(base, target))
+    try:
+        loop = asyncio.get_running_loop()
+    except RuntimeError:
+        loop = None
+
+    if loop and loop.is_running():
+        import concurrent.futures
+        with concurrent.futures.ThreadPoolExecutor() as pool:
+            result = pool.submit(asyncio.run, frankfurter_client.get_rate(base, target)).result()
+    else:
+        result = asyncio.run(frankfurter_client.get_rate(base, target))
+
     return {
         "base": base,
         "target": target,
@@ -52,7 +63,18 @@ def get_interest_rate(currency: str) -> dict:
     }
 
     country = CURRENCY_TO_COUNTRY.get(currency, currency)
-    results = asyncio.run(fred_client.get_interest_rates([country]))
+
+    try:
+        loop = asyncio.get_running_loop()
+    except RuntimeError:
+        loop = None
+
+    if loop and loop.is_running():
+        import concurrent.futures
+        with concurrent.futures.ThreadPoolExecutor() as pool:
+            results = pool.submit(asyncio.run, fred_client.get_interest_rates([country])).result()
+    else:
+        results = asyncio.run(fred_client.get_interest_rates([country]))
 
     if results:
         return {
@@ -116,7 +138,3 @@ def get_carry_trade_agent():
         )
 
     return _carry_trade_agent
-
-
-# For backwards compatibility
-carry_trade_agent = property(lambda self: get_carry_trade_agent())
