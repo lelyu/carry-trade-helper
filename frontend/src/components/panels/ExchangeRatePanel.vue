@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue'
 import draggable from 'vuedraggable'
 import { useRatesStore } from '@/stores/rates'
 import { formatExchangeRate, formatCurrency, formatRelativeTime } from '@/utils/formatting'
@@ -19,6 +19,7 @@ const selectedBase = ref('USD')
 const amountInput = ref<number>(1)
 const targetSearch = ref('')
 const showTargetDropdown = ref(false)
+const dropdownRef = ref<HTMLElement | null>(null)
 
 const currencyNames: Record<string, string> = {
   USD: 'US Dollar',
@@ -30,12 +31,39 @@ const currencyNames: Record<string, string> = {
   CAD: 'Canadian Dollar',
   NZD: 'New Zealand Dollar',
   CNY: 'Chinese Yuan',
-  HKD: 'Hong Kong Dollar'
+  HKD: 'Hong Kong Dollar',
+  BRL: 'Brazilian Real',
+  INR: 'Indian Rupee',
+  KRW: 'South Korean Won',
+  MXN: 'Mexican Peso',
+  SGD: 'Singapore Dollar',
+  SEK: 'Swedish Krona',
+  NOK: 'Norwegian Krone',
+  DKK: 'Danish Krone',
+  ZAR: 'South African Rand',
+  TRY: 'Turkish Lira',
+  PLN: 'Polish Zloty',
+  THB: 'Thai Baht',
+  IDR: 'Indonesian Rupiah',
+  HUF: 'Hungarian Forint',
+  CZK: 'Czech Koruna',
+  ILS: 'Israeli Shekel',
+  PHP: 'Philippine Peso',
+  MYR: 'Malaysian Ringgit',
+  RON: 'Romanian Leu',
+  BGN: 'Bulgarian Lev',
+  ISK: 'Icelandic Krona'
+}
+
+const getCurrencyName = (code: string): string => {
+  return ratesStore.supportedCurrencies[code] || currencyNames[code] || code
 }
 
 const availableCurrencies = computed(() => {
-  const currencies = Object.keys(currencyNames)
-  return currencies.sort()
+  const staticKeys = new Set(Object.keys(currencyNames))
+  const apiKeys = Object.keys(ratesStore.supportedCurrencies)
+  const all = new Set([...staticKeys, ...apiKeys])
+  return [...all].sort()
 })
 
 const savedTargetCurrencies = localStorage.getItem(STORAGE_KEY_TARGETS)
@@ -67,7 +95,7 @@ const searchResults = computed(() => {
   const query = targetSearch.value.toLowerCase()
   return availableCurrencies.value.filter(c =>
     !selectedTargets.value.includes(c) &&
-    (c.toLowerCase().includes(query) || currencyNames[c]?.toLowerCase().includes(query))
+    (c.toLowerCase().includes(query) || getCurrencyName(c).toLowerCase().includes(query))
   )
 })
 
@@ -131,8 +159,20 @@ const closeDropdown = () => {
   showTargetDropdown.value = false
 }
 
+const handleClickOutside = (event: MouseEvent) => {
+  if (dropdownRef.value && !dropdownRef.value.contains(event.target as Node)) {
+    showTargetDropdown.value = false
+  }
+}
+
 onMounted(async () => {
+  document.addEventListener('mousedown', handleClickOutside)
+  await ratesStore.fetchSupportedCurrencies()
   await fetchData()
+})
+
+onBeforeUnmount(() => {
+  document.removeEventListener('mousedown', handleClickOutside)
 })
 
 watch(selectedBase, async () => {
@@ -145,10 +185,10 @@ watch(allQuoteRates, () => {
 </script>
 
 <template>
-  <div class="bg-white rounded-lg shadow-md p-6">
+  <div class="bg-white rounded-lg shadow-md p-4 sm:p-6">
     <h2 class="text-xl font-semibold mb-4">Exchange Rates</h2>
     
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
       <div>
         <label class="block text-sm font-medium text-gray-700 mb-2">
           Base Currency
@@ -158,7 +198,7 @@ watch(allQuoteRates, () => {
           class="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
         >
           <option v-for="currency in availableCurrencies" :key="currency" :value="currency">
-            {{ currency }} - {{ currencyNames[currency] }}
+            {{ currency }} - {{ getCurrencyName(currency) }}
           </option>
         </select>
       </div>
@@ -178,18 +218,18 @@ watch(allQuoteRates, () => {
       </div>
     </div>
 
-    <div class="mb-6">
+    <div class="mb-4">
       <label class="block text-sm font-medium text-gray-700 mb-2">
         Target Currencies
       </label>
-      <div class="relative">
+      <div ref="dropdownRef" class="relative">
         <div class="flex flex-wrap gap-2 mb-2" v-if="selectedTargets.length > 0">
           <span
             v-for="currency in selectedTargets"
             :key="currency"
             class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800"
           >
-            {{ currency }} - {{ currencyNames[currency] }}
+            {{ currency }} - {{ getCurrencyName(currency) }}
             <button
               @click="removeTargetCurrency(currency)"
               class="ml-1.5 inline-flex items-center justify-center w-4 h-4 rounded-full text-blue-400 hover:text-blue-600 hover:bg-blue-200 focus:outline-none"
@@ -224,7 +264,7 @@ watch(allQuoteRates, () => {
               class="block w-full text-left px-4 py-2 text-sm hover:bg-blue-50 transition-colors"
             >
               <span class="font-medium">{{ currency }}</span>
-              <span class="text-gray-500 ml-2">{{ currencyNames[currency] }}</span>
+              <span class="text-gray-500 ml-2">{{ getCurrencyName(currency) }}</span>
             </button>
           </div>
           <div
@@ -245,18 +285,18 @@ watch(allQuoteRates, () => {
       <table class="min-w-full divide-y divide-gray-200">
         <thead class="bg-gray-50">
           <tr>
-            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-8"></th>
-            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+            <th class="px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-8"></th>
+            <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
               Currency
             </th>
-            <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-              Exchange Rate
+            <th class="px-3 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+              Rate
             </th>
-            <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-              Converted Amount
+            <th class="px-3 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+              Amount
             </th>
-            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-              Last Updated
+            <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              Updated
             </th>
           </tr>
         </thead>
@@ -274,26 +314,26 @@ watch(allQuoteRates, () => {
               class="hover:bg-gray-50 cursor-pointer transition-colors"
               @click="handleQuoteClick(rate.target_currency)"
             >
-              <td class="px-4 py-4 whitespace-nowrap">
+              <td class="px-2 py-2 whitespace-nowrap">
                 <span class="drag-handle cursor-grab active:cursor-grabbing text-gray-400 hover:text-gray-600">&#9776;</span>
               </td>
-              <td class="px-6 py-4 whitespace-nowrap">
-                <div class="flex items-center">
-                  <div class="text-sm font-medium text-gray-900">
+              <td class="px-3 py-2 whitespace-nowrap">
+                <div class="flex items-center gap-1">
+                  <span class="text-sm font-medium text-gray-900">
                     {{ rate.target_currency }}
-                  </div>
-                  <div class="text-sm text-gray-500 ml-2">
-                    {{ currencyNames[rate.target_currency] || rate.target_currency }}
-                  </div>
+                  </span>
+                  <span class="text-xs text-gray-500">
+                    {{ getCurrencyName(rate.target_currency) }}
+                  </span>
                 </div>
               </td>
-              <td class="px-6 py-4 whitespace-nowrap text-right text-sm text-gray-900">
-                {{ selectedBase }}/{{ rate.target_currency }} {{ formatExchangeRate(Number(rate.rate)) }}
+              <td class="px-3 py-2 whitespace-nowrap text-right text-sm text-gray-900">
+                {{ formatExchangeRate(Number(rate.rate)) }}
               </td>
-              <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium text-gray-900">
+              <td class="px-3 py-2 whitespace-nowrap text-right text-sm font-medium text-gray-900">
                 {{ formatCurrency(Number(rate.rate) * amountInput, rate.target_currency) }}
               </td>
-              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+              <td class="px-3 py-2 whitespace-nowrap text-xs text-gray-500">
                 {{ formatRelativeTime(rate.created_at) }}
               </td>
             </tr>

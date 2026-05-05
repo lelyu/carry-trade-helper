@@ -195,4 +195,9 @@ async def get_historical_rates(
 @router.get("/currencies")
 async def get_supported_currencies():
     currencies = await frankfurter_client.get_supported_currencies()
-    return {"currencies": currencies}
+    filtered = {
+        c["iso_code"]: c["name"]
+        for c in currencies
+        if c.get("iso_code") in SUPPORTED_CURRENCIES
+    }
+    return {"currencies": filtered}
