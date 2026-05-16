@@ -85,3 +85,10 @@ celerybeat.pid
 
 celerybeat-schedule*
 celerybeat.pid
+
+# Agents/Skills config
+.agents/
+skills-lock.json
+
+# Alembic migrations (local)
+backend/alembic/versions/
