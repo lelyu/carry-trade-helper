@@ -1,12 +1,13 @@
-FROM node:20-alpine
-
+FROM node:20-alpine AS build
 WORKDIR /app
-
 COPY package*.json ./
+RUN npm ci
+COPY . .
+RUN npm run build
 
-COPY entrypoint.sh /app/entrypoint.sh
-RUN chmod +x /app/entrypoint.sh
-
+FROM node:20-alpine AS serve
+WORKDIR /app
+RUN npm install -g serve
+COPY --from=build /app/dist /app/dist
 EXPOSE 3000
-
-ENTRYPOINT ["/app/entrypoint.sh"]
+CMD ["serve", "-s", "/app/dist", "-l", "3000"]
