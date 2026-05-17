@@ -1,47 +1,31 @@
 from pydantic import BaseModel
-from datetime import date, datetime
-from decimal import Decimal
-from uuid import UUID
+from datetime import date as date_type
 
 
-class ExchangeRateBase(BaseModel):
-    base_currency: str
+class ExchangeRateItem(BaseModel):
     target_currency: str
-    rate: Decimal
-    date: date
-    source: str = "frankfurter"
-
-
-class ExchangeRateResponse(ExchangeRateBase):
-    id: UUID | None
-    created_at: datetime | None
-
-    class Config:
-        from_attributes = True
+    rate: float
+    date: date_type
+    trend_7d: float | None = None
 
 
 class ExchangeRateListResponse(BaseModel):
-    rates: list[ExchangeRateResponse]
-    count: int
+    base: str
+    as_of: date_type | None = None
+    rates: list[ExchangeRateItem]
+    history_7d: dict[str, list[dict[str, str | float]]] | None = None
 
 
-class InterestRateBase(BaseModel):
+class InterestRateItem(BaseModel):
     country_code: str
     currency_code: str
-    rate: Decimal
-    rate_type: str | None = None
-    date: date
-    source: str | None = "fred"
-
-
-class InterestRateResponse(InterestRateBase):
-    id: UUID | None
-    created_at: datetime | None
-
-    class Config:
-        from_attributes = True
+    country_name: str
+    rate: float
+    date: date_type | None = None
+    trend_7d: float | None = None
 
 
 class InterestRateListResponse(BaseModel):
-    rates: list[InterestRateResponse]
-    count: int
+    as_of: date_type | None = None
+    rates: list[InterestRateItem]
+    history_7d: dict[str, list[dict[str, str | float]]] | None = None

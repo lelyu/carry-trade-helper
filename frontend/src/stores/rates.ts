@@ -1,81 +1,74 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
-import type { ExchangeRate, InterestRate } from '@/types'
+import type { ExchangeRateItem, InterestRateItem, ExchangeRateListResponse, InterestRateListResponse } from '@/types'
 import { exchangeRatesApi, interestRatesApi } from '@/services/api'
 
 export const useRatesStore = defineStore('rates', () => {
-  const exchangeRates = ref<ExchangeRate[]>([])
-  const interestRates = ref<InterestRate[]>([])
-  const historicalExchangeRates = ref<ExchangeRate[]>([])
-  const historicalInterestRates = ref<InterestRate[]>([])
+  const exchangeRates = ref<ExchangeRateItem[]>([])
+  const interestRates = ref<InterestRateItem[]>([])
+  const exchangeBase = ref('USD')
+  const exchangeAsOf = ref<string | null>(null)
+  const interestAsOf = ref<string | null>(null)
+  const exchangeHistory7d = ref<Record<string, Array<{ date: string; rate: string }>> | null>(null)
+  const interestHistory7d = ref<Record<string, Array<{ date: string; rate: string }>> | null>(null)
   const supportedCurrencies = ref<Record<string, string>>({})
-  const loading = ref(false)
-  const error = ref<string | null>(null)
+  const exchangeLoading = ref(false)
+  const interestLoading = ref(false)
+  const exchangeError = ref<string | null>(null)
+  const interestError = ref<string | null>(null)
+  const exchangeStale = ref(false)
+  const interestStale = ref(false)
 
   const fetchLatestExchangeRates = async (base: string = 'USD') => {
-    loading.value = true
-    error.value = null
+    exchangeLoading.value = true
+    exchangeError.value = null
     try {
-      const response = await exchangeRatesApi.getLatest(base)
+      const response: ExchangeRateListResponse = await exchangeRatesApi.getLatest(base)
       exchangeRates.value = response.rates
+      exchangeAsOf.value = response.as_of
+      exchangeHistory7d.value = response.history_7d
+      exchangeBase.value = base
     } catch (err) {
-      error.value = 'Failed to fetch exchange rates'
+      exchangeError.value = 'Failed to fetch exchange rates'
       console.error(err)
     } finally {
-      loading.value = false
+      exchangeLoading.value = false
     }
   }
 
-  const fetchLatestInterestRates = async (countries?: string) => {
-    loading.value = true
-    error.value = null
+  const fetchLatestInterestRates = async () => {
+    interestLoading.value = true
+    interestError.value = null
     try {
-      const response = await interestRatesApi.getLatest(countries)
+      const response: InterestRateListResponse = await interestRatesApi.getLatest()
       interestRates.value = response.rates
+      interestAsOf.value = response.as_of
+      interestHistory7d.value = response.history_7d
     } catch (err) {
-      error.value = 'Failed to fetch interest rates'
+      interestError.value = 'Failed to fetch interest rates'
       console.error(err)
     } finally {
-      loading.value = false
+      interestLoading.value = false
     }
   }
 
-  const fetchHistoricalExchangeRates = async (
-    base: string,
-    target: string,
-    from: string,
-    to: string
-  ) => {
-    loading.value = true
-    error.value = null
+  const fetchHistoricalExchangeRates = async (base: string, target: string, from: string, to: string) => {
     try {
       const response = await exchangeRatesApi.getHistorical(base, target, from, to)
-      historicalExchangeRates.value = response.rates
+      return response.rates
     } catch (err) {
-      error.value = 'Failed to fetch historical exchange rates'
       console.error(err)
-    } finally {
-      loading.value = false
+      return []
     }
   }
 
-  const fetchHistoricalInterestRates = async (
-    countries: string,
-    from: string,
-    to: string
-  ) => {
-    loading.value = true
-    error.value = null
+  const fetchHistoricalInterestRates = async (country: string, from: string, to: string) => {
     try {
-      const response = await interestRatesApi.getHistorical(countries, from, to)
-      historicalInterestRates.value = response.rates
+      const response = await interestRatesApi.getHistorical(country, from, to)
       return response.rates
     } catch (err) {
-      error.value = 'Failed to fetch historical interest rates'
       console.error(err)
       return []
-    } finally {
-      loading.value = false
     }
   }
 
@@ -91,15 +84,22 @@ export const useRatesStore = defineStore('rates', () => {
   return {
     exchangeRates,
     interestRates,
-    historicalExchangeRates,
-    historicalInterestRates,
+    exchangeBase,
+    exchangeAsOf,
+    interestAsOf,
+    exchangeHistory7d,
+    interestHistory7d,
     supportedCurrencies,
-    loading,
-    error,
+    exchangeLoading,
+    interestLoading,
+    exchangeError,
+    interestError,
+    exchangeStale,
+    interestStale,
     fetchLatestExchangeRates,
     fetchLatestInterestRates,
     fetchHistoricalExchangeRates,
     fetchHistoricalInterestRates,
-    fetchSupportedCurrencies
+    fetchSupportedCurrencies,
   }
 })

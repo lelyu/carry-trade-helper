@@ -1,49 +1,16 @@
 from app.schemas.rates import (
-    ExchangeRateBase,
-    ExchangeRateResponse,
+    ExchangeRateItem,
     ExchangeRateListResponse,
-    InterestRateBase,
-    InterestRateResponse,
+    InterestRateItem,
     InterestRateListResponse,
 )
-from app.schemas.frankfurter import (
-    FrankfurterRateItem,
-    FrankfurterRatesResponse,
-)
-from app.schemas.user import (
-    DeviceInfo,
-    UserBase,
-    UserCreate,
-    UserResponse,
-    MagicLinkRequest,
-    MagicLinkVerify,
-    TokenResponse,
-    RefreshTokenRequest,
-    SessionInfo,
-    SessionsResponse,
-    RevokeSessionRequest,
-    LogoutRequest,
-)
+from app.schemas.frankfurter import FrankfurterRateItem, FrankfurterRatesResponse
 
 __all__ = [
-    "ExchangeRateBase",
-    "ExchangeRateResponse",
+    "ExchangeRateItem",
     "ExchangeRateListResponse",
-    "InterestRateBase",
-    "InterestRateResponse",
+    "InterestRateItem",
     "InterestRateListResponse",
     "FrankfurterRateItem",
     "FrankfurterRatesResponse",
-    "DeviceInfo",
-    "UserBase",
-    "UserCreate",
-    "UserResponse",
-    "MagicLinkRequest",
-    "MagicLinkVerify",
-    "TokenResponse",
-    "RefreshTokenRequest",
-    "SessionInfo",
-    "SessionsResponse",
-    "RevokeSessionRequest",
-    "LogoutRequest",
 ]

@@ -1,5 +1,4 @@
 import { createRouter, createWebHistory } from 'vue-router'
-import { useAuthStore } from '@/stores/auth'
 
 const routes = [
   {
@@ -8,67 +7,35 @@ const routes = [
     component: () => import('@/views/Home.vue')
   },
   {
-    path: '/dashboard',
-    name: 'Dashboard',
-    component: () => import('@/views/Dashboard.vue'),
-    meta: { requiresAuth: true }
+    path: '/exchange',
+    name: 'ExchangeRates',
+    component: () => import('@/views/ExchangeRates.vue')
   },
   {
-    path: '/chat',
-    name: 'Chat',
-    component: () => import('@/views/Chat.vue'),
-    meta: { requiresAuth: true }
+    path: '/exchange/:target',
+    name: 'ExchangeDetail',
+    component: () => import('@/views/ExchangeDetail.vue'),
+    props: true
   },
   {
-    path: '/settings',
-    name: 'Settings',
-    component: () => import('@/views/Settings.vue'),
-    meta: { requiresAuth: true }
+    path: '/interest',
+    name: 'InterestRates',
+    component: () => import('@/views/InterestRates.vue')
   },
   {
-    path: '/login',
-    name: 'Login',
-    component: () => import('@/views/Login.vue')
-  },
-  {
-    path: '/auth/verify',
-    name: 'VerifyToken',
-    component: () => import('@/views/VerifyToken.vue')
+    path: '/interest/:code',
+    name: 'InterestDetail',
+    component: () => import('@/views/InterestDetail.vue'),
+    props: true
   }
 ]
 
 const router = createRouter({
   history: createWebHistory(),
-  routes
-})
-
-router.beforeEach(async (to, _from, next) => {
-  const authStore = useAuthStore()
-
-  if (to.meta.requiresAuth) {
-    if (!authStore.accessToken) {
-      next({ name: 'Login' })
-      return
-    }
-
-    if (authStore.tokenExpiry && Date.now() > authStore.tokenExpiry) {
-      const refreshed = await authStore.attemptRefresh()
-      if (!refreshed) {
-        next({ name: 'Login' })
-        return
-      }
-    }
-
-    if (!authStore.user) {
-      const result = await authStore.fetchUser()
-      if (!result.success) {
-        next({ name: 'Login' })
-        return
-      }
-    }
+  routes,
+  scrollBehavior() {
+    return { top: 0 }
   }
-
-  next()
 })
 
 export default router

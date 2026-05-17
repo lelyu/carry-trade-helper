@@ -1,7 +1,9 @@
 import httpx
-from datetime import date
-from app.core.config import settings
+from datetime import date, timedelta
+from decimal import Decimal
+
 from app.schemas.frankfurter import FrankfurterRatesResponse
+
 
 class FrankfurterClient:
     BASE_URL = "https://api.frankfurter.dev/v2"
@@ -9,7 +11,7 @@ class FrankfurterClient:
     async def get_latest_rates(
         self, base: str = "USD", quotes: list[str] | None = None
     ) -> list[dict]:
-        params = {"base": base}
+        params: dict = {"base": base}
         if quotes:
             params["quotes"] = ",".join(quotes)
 
@@ -21,15 +23,16 @@ class FrankfurterClient:
                 validated = FrankfurterRatesResponse(rates=data)
                 return [item.model_dump() for item in validated.rates]
         except httpx.HTTPError as e:
-            raise Exception(
-                f"Failed to fetch latest rates from Frankfurter API: {str(e)}"
-            )
+            raise Exception(f"Failed to fetch latest rates: {str(e)}")
 
     async def get_historical_rates(
-        self, base: str, quotes: list[str], from_date: date, 
-    to_date: date
+        self,
+        base: str,
+        quotes: list[str],
+        from_date: date,
+        to_date: date,
     ) -> list[dict]:
-        params = {
+        params: dict = {
             "base": base,
             "quotes": ",".join(quotes),
             "from": from_date.isoformat(),
@@ -44,9 +47,7 @@ class FrankfurterClient:
                 validated = FrankfurterRatesResponse(rates=data)
                 return [item.model_dump() for item in validated.rates]
         except httpx.HTTPError as e:
-            raise Exception(
-                f"Failed to fetch historical rates from Frankfurter API: {str(e)}"
-            )
+            raise Exception(f"Failed to fetch historical rates: {str(e)}")
 
     async def get_supported_currencies(self) -> list[dict]:
         try:
@@ -55,26 +56,29 @@ class FrankfurterClient:
                 response.raise_for_status()
                 return response.json()
         except httpx.HTTPError as e:
-            raise Exception(
-                f"Failed to fetch supported currencies from Frankfurter API: {str(e)}"
+            raise Exception(f"Failed to fetch currencies: {str(e)}")
+
+    async def get_7day_history(
+        self, base: str = "USD", quotes: list[str] | None = None
+    ) -> dict[str, list[dict]]:
+        to_date = date.today()
+        from_date = to_date - timedelta(days=7)
+        data = await self.get_historical_rates(
+            base=base,
+            quotes=quotes or [],
+            from_date=from_date,
+            to_date=to_date,
+        )
+
+        history: dict[str, list[dict]] = {}
+        for item in data:
+            currency = item["quote"]
+            if currency not in history:
+                history[currency] = []
+            history[currency].append(
+                {"date": item["date"], "rate": item["rate"]}
             )
-
-    async def get_rate(
-        self, base: str, target: str, rate_date: date | None = None
-    ) -> dict:
-        params = {}
-        if rate_date:
-            params["date"] = rate_date.isoformat()
-
-        try:
-            async with httpx.AsyncClient() as client:
-                response = await client.get(
-                    f"{self.BASE_URL}/rate/{base}/{target}", params=params
-                )
-                response.raise_for_status()
-                return response.json()
-        except httpx.HTTPError as e:
-            raise Exception(f"Failed to fetch rate from Frankfurter API: {str(e)}")
+        return history
 
 
 frankfurter_client = FrankfurterClient()

@@ -2,18 +2,9 @@ from pydantic_settings import BaseSettings
 
 
 class Settings(BaseSettings):
-    DATABASE_URL: str
-    REDIS_URL: str = "redis://localhost:6379/0"
-    RESEND_API_KEY: str
-    GOOGLE_API_KEY: str
-    TAVILY_API_KEY: str
     FRED_API_KEY: str
-    SECRET_KEY: str
     FRONTEND_URL: str = "http://localhost:3000"
-    EMAIL_DOMAIN: str = "localhost"
-    ACCESS_TOKEN_EXPIRE_MINUTES: int = 15
-    MAGIC_LINK_EXPIRE_MINUTES: int = 15
-    REFRESH_TOKEN_EXPIRE_DAYS: int = 14
+    CACHE_TTL_SECONDS: int = 3600
 
     SUPPORTED_CURRENCIES: list[str] = [
         "EUR",
@@ -27,21 +18,36 @@ class Settings(BaseSettings):
         "HKD",
     ]
 
-    SUPPORTED_CURRENCY_PAIRS: list[str] = [
-        "EUR/USD",
-        "GBP/USD",
-        "USD/JPY",
-        "USD/CHF",
-        "AUD/USD",
-        "USD/CAD",
-        "NZD/USD",
-        "USD/CNY",
-        "USD/HKD",
-    ]
+    COUNTRY_NAMES: dict[str, str] = {
+        "USA": "United States",
+        "EUR": "Euro Area",
+        "GBR": "United Kingdom",
+        "JPN": "Japan",
+        "CHE": "Switzerland",
+        "AUD": "Australia",
+        "CAN": "Canada",
+        "NZL": "New Zealand",
+        "CHN": "China",
+        "HKG": "Hong Kong",
+    }
+
+    CURRENCY_NAMES: dict[str, str] = {
+        "USD": "US Dollar",
+        "EUR": "Euro",
+        "GBP": "British Pound",
+        "JPY": "Japanese Yen",
+        "CHF": "Swiss Franc",
+        "AUD": "Australian Dollar",
+        "CAD": "Canadian Dollar",
+        "NZD": "New Zealand Dollar",
+        "CNY": "Chinese Yuan",
+        "HKD": "Hong Kong Dollar",
+    }
 
     class Config:
         env_file = ".env"
         case_sensitive = True
+        extra = "ignore"
 
 
 settings = Settings()

@@ -1,25 +1,76 @@
 <script setup lang="ts">
-import ExchangeRatePanel from '@/components/panels/ExchangeRatePanel.vue'
-import InterestRatePanel from '@/components/panels/InterestRatePanel.vue'
-import FloatingAiBox from '@/components/common/FloatingAiBox.vue'
+import { onMounted } from 'vue'
+import { useRatesStore } from '@/stores/rates'
+import TabBar from '@/components/TabBar.vue'
+import AppFooter from '@/components/common/AppFooter.vue'
+
+const store = useRatesStore()
+
+onMounted(() => {
+  store.fetchLatestExchangeRates()
+  store.fetchLatestInterestRates()
+  store.fetchSupportedCurrencies()
+})
 </script>
 
 <template>
-  <div class="max-w-7xl mx-auto">
-    <div class="mb-8">
-      <h1 class="text-3xl font-bold text-gray-900">
-        Carry Trade Helper — Currency Converter & Interest Rates
-      </h1>
-      <p class="mt-3 text-gray-600 leading-relaxed">
-        Convert currencies in real-time across 40+ pairs and compare central bank interest rates worldwide. Our AI-powered assistant identifies carry trade opportunities by analyzing interest rate differentials and exchange rate trends, helping you make informed trading decisions.
-      </p>
-    </div>
+  <div class="h-screen flex flex-col bg-gray-50">
+    <header class="bg-white border-b border-gray-200 shrink-0">
+      <div class="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
+        <h1 class="text-lg font-bold text-gray-900">Carry Trade Helper</h1>
+        <span class="text-xs text-gray-400">v0.2.0</span>
+      </div>
+    </header>
 
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-      <ExchangeRatePanel />
-      <InterestRatePanel />
-    </div>
+    <main class="flex-1 overflow-y-auto max-w-7xl mx-auto w-full px-4 py-6 pb-20 md:pb-6">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6 md:h-full">
+        <router-link to="/exchange" class="block">
+          <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-5 hover:shadow-md transition-shadow cursor-pointer">
+            <div class="flex items-center justify-between mb-3">
+              <h2 class="text-base font-semibold text-gray-900">Exchange Rates</h2>
+              <span v-if="store.exchangeAsOf" class="text-xs text-gray-400">
+                {{ store.exchangeAsOf }}
+              </span>
+            </div>
+            <div v-if="store.exchangeLoading" class="space-y-2">
+              <div v-for="i in 3" :key="i" class="h-6 bg-gray-100 rounded animate-pulse" />
+            </div>
+            <div v-else-if="store.exchangeError" class="text-red-600 text-sm">{{ store.exchangeError }}</div>
+            <div v-else class="space-y-1.5">
+              <div v-for="rate in store.exchangeRates.slice(0, 5)" :key="rate.target_currency" class="flex justify-between text-sm">
+                <span class="text-gray-600">{{ rate.target_currency }}</span>
+                <span class="font-mono text-gray-900">{{ rate.rate.toFixed(rate.rate < 10 ? 4 : 2) }}</span>
+              </div>
+              <div v-if="store.exchangeRates.length > 5" class="text-blue-600 text-xs pt-1">View all &rarr;</div>
+            </div>
+          </div>
+        </router-link>
 
-    <FloatingAiBox />
+        <router-link to="/interest" class="block">
+          <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-5 hover:shadow-md transition-shadow cursor-pointer">
+            <div class="flex items-center justify-between mb-3">
+              <h2 class="text-base font-semibold text-gray-900">Interest Rates</h2>
+              <span v-if="store.interestAsOf" class="text-xs text-gray-400">
+                {{ store.interestAsOf }}
+              </span>
+            </div>
+            <div v-if="store.interestLoading" class="space-y-2">
+              <div v-for="i in 3" :key="i" class="h-6 bg-gray-100 rounded animate-pulse" />
+            </div>
+            <div v-else-if="store.interestError" class="text-red-600 text-sm">{{ store.interestError }}</div>
+            <div v-else class="space-y-1.5">
+              <div v-for="rate in store.interestRates.slice(0, 5)" :key="rate.country_code" class="flex justify-between text-sm">
+                <span class="text-gray-600">{{ rate.country_name }}</span>
+                <span class="font-mono text-gray-900">{{ rate.rate.toFixed(2) }}%</span>
+              </div>
+              <div v-if="store.interestRates.length > 5" class="text-blue-600 text-xs pt-1">View all &rarr;</div>
+            </div>
+          </div>
+        </router-link>
+      </div>
+    </main>
+
+    <AppFooter />
+    <TabBar />
   </div>
 </template>
