@@ -2,7 +2,7 @@
 </script>
 
 <template>
-  <footer class="bg-gray-800 text-gray-300 hidden md:block">
+  <footer class="bg-gray-800 dark:bg-gray-900 text-gray-300 hidden md:block">
     <div class="max-w-7xl mx-auto px-4 py-8">
       <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
         <div>
@@ -26,7 +26,7 @@
           </ul>
         </div>
       </div>
-      <div class="border-t border-gray-700 mt-6 pt-6 text-center text-sm text-gray-500">
+      <div class="border-t border-gray-700 dark:border-gray-800 mt-6 pt-6 text-center text-sm text-gray-500">
         <p>&copy; {{ new Date().getFullYear() }} Carry Trade Helper. All rights reserved.</p>
       </div>
     </div>

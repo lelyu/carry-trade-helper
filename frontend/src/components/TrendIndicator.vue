@@ -6,10 +6,10 @@ const props = defineProps<{
 }>()
 
 const trendClass = computed(() => {
-  if (props.value === null || props.value === undefined) return 'text-gray-400'
-  if (props.value > 0) return 'text-green-600'
-  if (props.value < 0) return 'text-red-600'
-  return 'text-gray-400'
+  if (props.value === null || props.value === undefined) return 'text-gray-400 dark:text-gray-600'
+  if (props.value > 0) return 'text-green-600 dark:text-green-400'
+  if (props.value < 0) return 'text-red-600 dark:text-red-400'
+  return 'text-gray-400 dark:text-gray-600'
 })
 
 const trendIcon = computed(() => {

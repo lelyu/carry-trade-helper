@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import * as d3 from 'd3'
 import { onMounted, ref, watch } from 'vue'
+import { useTheme } from '@/composables/useTheme'
 
 const props = defineProps<{
   data: Array<{ date: string; rate: number }>
@@ -10,6 +11,9 @@ const props = defineProps<{
 }>()
 
 const chartRef = ref<HTMLDivElement>()
+const { resolvedTheme } = useTheme()
+
+const isDark = () => resolvedTheme.value === 'dark'
 
 const drawChart = () => {
   if (!props.data || props.data.length === 0 || !chartRef.value) return
@@ -21,6 +25,11 @@ const drawChart = () => {
   const width = containerWidth - margin.left - margin.right
   const height = (props.height || 250) - margin.top - margin.bottom
   const color = props.color || '#3b82f6'
+  const dark = isDark()
+  const textColor = dark ? '#9ca3af' : '#6b7280'
+  const gridColor = dark ? '#374151' : '#f3f4f6'
+  const domainColor = dark ? '#4b5563' : '#e5e7eb'
+  const labelColor = dark ? '#e5e7eb' : '#111827'
 
   d3.select(chartRef.value).selectAll('*').remove()
 
@@ -55,16 +64,16 @@ const drawChart = () => {
     .call(d3.axisBottom(x).ticks(5).tickSize(0).tickPadding(8))
     .selectAll('text')
     .style('font-size', '11px')
-    .style('fill', '#6b7280')
+    .style('fill', textColor)
 
   svg.append('g')
     .call(d3.axisLeft(y).ticks(5).tickSize(-width).tickFormat(d => props.step ? d3.format('.2f')(d) : d3.format('.4f')(d)))
     .selectAll('text')
     .style('font-size', '11px')
-    .style('fill', '#6b7280')
+    .style('fill', textColor)
 
-  svg.selectAll('.domain').attr('stroke', '#e5e7eb')
-  svg.selectAll('.tick line').attr('stroke', '#f3f4f6')
+  svg.selectAll('.domain').attr('stroke', domainColor)
+  svg.selectAll('.tick line').attr('stroke', gridColor)
 
   const line = d3.line<typeof parsedData[0]>()
     .x(d => x(d.parsedDate))
@@ -108,8 +117,8 @@ const drawChart = () => {
 
   const focus = svg.append('g').style('display', 'none')
   focus.append('circle').attr('r', 4).attr('fill', color)
-  focus.append('line').attr('class', 'focus-line').attr('stroke', '#9ca3af').attr('stroke-dasharray', '3,3').attr('y1', 0).attr('y2', height)
-  focus.append('text').attr('class', 'focus-label').attr('dy', '-10').attr('text-anchor', 'middle').style('font-size', '12px').style('font-weight', '600')
+  focus.append('line').attr('class', 'focus-line').attr('stroke', dark ? '#6b7280' : '#9ca3af').attr('stroke-dasharray', '3,3').attr('y1', 0).attr('y2', height)
+  focus.append('text').attr('class', 'focus-label').attr('dy', '-10').attr('text-anchor', 'middle').style('font-size', '12px').style('font-weight', '600').style('fill', labelColor)
 
   const overlay = svg.append('rect')
     .attr('width', width)
@@ -144,6 +153,7 @@ onMounted(() => {
 
 watch(() => props.data, () => drawChart(), { deep: true })
 watch(() => props.color, () => drawChart())
+watch(resolvedTheme, () => drawChart())
 </script>
 
 <template>
