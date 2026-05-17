@@ -3,6 +3,7 @@ import { ref, computed, onMounted } from 'vue'
 import { useRatesStore } from '@/stores/rates'
 import TrendIndicator from '@/components/TrendIndicator.vue'
 import TabBar from '@/components/TabBar.vue'
+import ThemeToggle from '@/components/ThemeToggle.vue'
 
 const store = useRatesStore()
 const search = ref('')
@@ -47,7 +48,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="h-screen flex flex-col bg-gray-50 dark:bg-gray-900">
+  <div class="h-screen flex flex-col bg-gray-50 dark:bg-gray-900 md:pt-14">
     <header class="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 shrink-0 z-40">
       <div class="px-4 py-3">
         <div class="flex items-center justify-between mb-3">
@@ -57,7 +58,7 @@ onMounted(() => {
             </svg>
           </router-link>
           <h1 class="text-lg font-semibold text-gray-900 dark:text-gray-100">Exchange Rates</h1>
-          <div class="w-5" />
+          <ThemeToggle />
         </div>
         <div class="flex flex-col gap-2">
           <div v-if="store.exchangeAsOf" class="text-xs text-gray-400 dark:text-gray-500 text-center">

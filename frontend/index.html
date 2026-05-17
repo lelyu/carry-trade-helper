@@ -11,6 +11,15 @@
     <meta property="og:type" content="website">
     <meta name="twitter:card" content="summary_large_image">
     <title>Carry Trade Helper — Currency Converter & Interest Rates</title>
+    <script>
+      ;(function () {
+        var t = localStorage.getItem('theme')
+        var d = 'light'
+        if (t === 'dark' || (!t && window.matchMedia('(prefers-color-scheme: dark)').matches)) d = 'dark'
+        document.documentElement.classList.toggle('dark', d === 'dark')
+        document.documentElement.style.colorScheme = d
+      })()
+    </script>
   </head>
   <body>
     <div id="app"></div>

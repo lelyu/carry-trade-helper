@@ -3,6 +3,8 @@ import { ref, computed, onMounted, watch } from 'vue'
 import { useRatesStore } from '@/stores/rates'
 import LineChart from '@/components/LineChart.vue'
 import TrendIndicator from '@/components/TrendIndicator.vue'
+import TabBar from '@/components/TabBar.vue'
+import ThemeToggle from '@/components/ThemeToggle.vue'
 
 const props = defineProps<{ target: string }>()
 const store = useRatesStore()
@@ -81,7 +83,7 @@ watch(selectedPeriod, (period) => {
 </script>
 
 <template>
-  <div class="h-screen flex flex-col bg-gray-50 dark:bg-gray-900">
+  <div class="h-screen flex flex-col bg-gray-50 dark:bg-gray-900 md:pt-14">
     <header class="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 shrink-0 z-40">
       <div class="px-4 py-3">
         <div class="flex items-center justify-between mb-2">
@@ -93,7 +95,7 @@ watch(selectedPeriod, (period) => {
           <h1 class="text-lg font-semibold text-gray-900 dark:text-gray-100">
             {{ store.exchangeBase }} / {{ target }}
           </h1>
-          <div class="w-5" />
+          <ThemeToggle />
         </div>
       </div>
     </header>
@@ -147,5 +149,7 @@ watch(selectedPeriod, (period) => {
         Currency not found
       </div>
     </main>
+
+    <TabBar />
   </div>
 </template>

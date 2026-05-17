@@ -24,8 +24,8 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="h-screen flex flex-col bg-gray-50 dark:bg-gray-900">
-    <header class="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 shrink-0">
+  <div class="h-screen flex flex-col bg-gray-50 dark:bg-gray-900 md:pt-14">
+    <header class="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 shrink-0 md:hidden">
       <div class="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
         <h1 class="text-lg font-bold text-gray-900 dark:text-gray-100">Carry Trade Helper</h1>
         <div class="flex items-center gap-2">

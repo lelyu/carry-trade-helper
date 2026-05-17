@@ -21,6 +21,7 @@ function applyTheme() {
   }
   resolvedTheme.value = effective
   document.documentElement.classList.toggle('dark', effective === 'dark')
+  document.documentElement.style.colorScheme = effective
 }
 
 function setTheme(newTheme: Theme) {
