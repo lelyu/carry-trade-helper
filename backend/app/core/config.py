@@ -5,6 +5,7 @@ class Settings(BaseSettings):
     FRED_API_KEY: str
     FRONTEND_URL: str = "http://localhost:3000"
     CACHE_TTL_SECONDS: int = 3600
+    PREFETCH_INTERVAL_SECONDS: int = 3600
 
     SUPPORTED_CURRENCIES: list[str] = [
         "EUR",
